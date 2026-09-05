@@ -1,4 +1,4 @@
-import 'package:fl_clash/common/common.dart';
+﻿import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/views/config/network.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -28,13 +28,13 @@ class TUNButton extends StatelessWidget {
                     ],
                   ),
                 ),
-                title: appLocalizations.tun,
+                title: context.appLocalizations.tun,
               );
             },
           );
         },
         info: Info(
-          label: appLocalizations.tun,
+          label: context.appLocalizations.tun,
           iconData: Icons.stacked_line_chart,
         ),
         child: Container(
@@ -47,7 +47,7 @@ class TUNButton extends StatelessWidget {
                 flex: 1,
                 child: TooltipText(
                   text: Text(
-                    appLocalizations.options,
+                    currentAppLocalizations.options,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(
@@ -100,13 +100,13 @@ class SystemProxyButton extends StatelessWidget {
                     items: [SystemProxyItem(), BypassDomainItem()],
                   ),
                 ),
-                title: appLocalizations.systemProxy,
+                title: context.appLocalizations.systemProxy,
               );
             },
           );
         },
         info: Info(
-          label: appLocalizations.systemProxy,
+          label: context.appLocalizations.systemProxy,
           iconData: Icons.shuffle,
         ),
         child: Container(
@@ -119,7 +119,7 @@ class SystemProxyButton extends StatelessWidget {
                 flex: 1,
                 child: TooltipText(
                   text: Text(
-                    appLocalizations.options,
+                    context.appLocalizations.options,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(
@@ -193,7 +193,7 @@ class VpnButton extends StatelessWidget {
                 flex: 1,
                 child: TooltipText(
                   text: Text(
-                    appLocalizations.options,
+                    context.appLocalizations.options,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(
@@ -224,3 +224,5 @@ class VpnButton extends StatelessWidget {
     );
   }
 }
+
+

@@ -87,7 +87,7 @@ set(CLASH_DIR "../libclash/windows")
 install(PROGRAMS "${CLASH_DIR}/SororainCore.exe" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime OPTIONAL)
 
-install(PROGRAMS "${CLASH_DIR}/SororainHelper.exe" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+install(PROGRAMS "${CLASH_DIR}/SororainHelperService.exe" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime OPTIONAL)
 
 install(FILES "EnableLoopback.exe" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"

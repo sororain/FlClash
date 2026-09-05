@@ -1,7 +1,7 @@
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/controller.dart';
+﻿import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
@@ -35,12 +35,12 @@ class _VpnContainerState extends ConsumerState<VpnManager> {
           return;
         }
         globalState.showNotifier(
-          appLocalizations.vpnConfigChangeDetected,
+          currentAppLocalizations.vpnConfigChangeDetected,
           actionState: MessageActionState(
-            actionText: appLocalizations.restart,
+            actionText: currentAppLocalizations.restart,
             action: () async {
-              await globalState.handleStop();
-              await appController.updateStatus(true);
+              await ref.read(setupActionProvider.notifier).handleStop();
+              await ref.read(setupActionProvider.notifier).updateStatus(true);
             },
           ),
         );
@@ -55,3 +55,4 @@ class _VpnContainerState extends ConsumerState<VpnManager> {
     return widget.child;
   }
 }
+

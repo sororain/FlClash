@@ -1,5 +1,4 @@
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/controller.dart';
+﻿import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -37,7 +36,7 @@ class ProxyCard extends StatelessWidget {
       child: Consumer(
         builder: (context, ref, _) {
           final delay = ref.watch(
-            getDelayProvider(proxyName: proxy.name, testUrl: testUrl),
+            delayProvider(proxyName: proxy.name, testUrl: testUrl),
           );
           return FadeThroughBox(
             alignment: type == ProxyCardType.expand
@@ -100,16 +99,16 @@ class ProxyCard extends StatelessWidget {
     final isComputedSelected = groupType.isComputedSelected;
     final isSelector = groupType == GroupType.Selector;
     if (isComputedSelected || isSelector) {
-      final currentProxyName = ref.read(getProxyNameProvider(groupName));
+      final currentProxyName = ref.read(proxyNameProvider(groupName));
       final nextProxyName = switch (isComputedSelected) {
         true => currentProxyName == proxy.name ? '' : proxy.name,
         false => proxy.name,
       };
-      appController.updateCurrentSelectedMap(groupName, nextProxyName);
-      appController.changeProxyDebounce(groupName, nextProxyName);
+      globalState.container.read(profilesActionProvider.notifier).updateCurrentSelectedMap(groupName, nextProxyName);
+      globalState.container.read(proxiesActionProvider.notifier).changeProxyDebounce(groupName, nextProxyName);
       return;
     }
-    globalState.showNotifier(appLocalizations.notSelectedTip);
+    globalState.showNotifier(currentAppLocalizations.notSelectedTip);
   }
 
   @override
@@ -122,7 +121,7 @@ class ProxyCard extends StatelessWidget {
         Consumer(
           builder: (_, ref, child) {
             final selectedProxyName = ref.watch(
-              getSelectedProxyNameProvider(groupName),
+              selectedProxyNameProvider(groupName),
             );
             return CommonCard(
               key: key,
@@ -198,7 +197,7 @@ class _ProxyDesc extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final desc = ref.watch(getProxyDescProvider(proxy));
+    final desc = ref.watch(proxyDescProvider(proxy));
     return EmojiText(
       desc,
       overflow: TextOverflow.ellipsis,
@@ -217,7 +216,7 @@ class _ProxyComputedMark extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final proxyName = ref.watch(getProxyNameProvider(groupName));
+    final proxyName = ref.watch(proxyNameProvider(groupName));
     if (proxyName != proxy.name) {
       return SizedBox();
     }
@@ -235,3 +234,5 @@ class _ProxyComputedMark extends ConsumerWidget {
     );
   }
 }
+
+

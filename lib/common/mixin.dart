@@ -1,3 +1,5 @@
+﻿import 'package:fl_clash/common/utils.dart';
+import 'package:flutter/widgets.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -41,3 +43,8 @@ mixin AsyncNotifierMixin<T> on AnyNotifier<AsyncValue<T>, T> {
     state = AsyncData(value);
   }
 }
+
+mixin UniqueKeyStateMixin<T extends StatefulWidget> on State<T> {
+  final key = utils.id;
+}
+

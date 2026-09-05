@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
@@ -50,7 +50,7 @@ class _MemoryInfoState extends State<MemoryInfo> {
     return SizedBox(
       height: getWidgetHeight(1),
       child: CommonCard(
-        info: Info(iconData: Icons.memory, label: appLocalizations.memoryInfo),
+        info: Info(iconData: Icons.memory, label: context.appLocalizations.memoryInfo),
         onPressed: () {
           coreController.requestGc();
         },
@@ -93,3 +93,5 @@ class _MemoryInfoState extends State<MemoryInfo> {
     );
   }
 }
+
+

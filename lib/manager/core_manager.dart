@@ -1,12 +1,8 @@
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/controller.dart';
+﻿import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/providers/config.dart';
-import 'package:fl_clash/providers/state.dart';
-import 'package:fl_clash/state.dart';
+import 'package:fl_clash/providers/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -31,16 +27,18 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     super.initState();
     coreEventManager.addListener(this);
     ref.listenManual(
-      currentSetupStateProvider.select((state) => state?.profileId),
+      currentProfileIdProvider,
       (prev, next) {
         if (prev != next) {
-          appController.fullSetup();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ref.read(setupActionProvider.notifier).fullSetup();
+          });
         }
       },
     );
     ref.listenManual(updateParamsProvider, (prev, next) {
       if (prev != next) {
-        appController.updateConfigDebounce();
+        ref.read(setupActionProvider.notifier).updateConfigDebounce();
       }
     });
     ref.listenManual(appSettingProvider.select((state) => state.openLogs), (
@@ -64,18 +62,15 @@ class _CoreContainerState extends ConsumerState<CoreManager>
   @override
   Future<void> onDelay(Delay delay) async {
     super.onDelay(delay);
-    appController.setDelay(delay);
+    ref.read(delayDataSourceProvider.notifier).setDelay(delay);
     debouncer.call(FunctionTag.updateDelay, () async {
-      appController.updateGroupsDebounce();
+      ref.read(proxiesActionProvider.notifier).updateGroupsDebounce();
     }, duration: const Duration(milliseconds: 5000));
   }
 
   @override
   void onLog(Log log) {
-    ref.read(logsProvider.notifier).addLog(log);
-    if (log.logLevel == LogLevel.error) {
-      globalState.showNotifier(log.payload);
-    }
+    ref.read(logsProvider.notifier).add(log);
     super.onLog(log);
   }
 
@@ -91,7 +86,7 @@ class _CoreContainerState extends ConsumerState<CoreManager>
         .read(providersProvider.notifier)
         .setProvider(await coreController.getExternalProvider(providerName));
     debouncer.call(FunctionTag.loadedProvider, () async {
-      appController.updateGroupsDebounce();
+      ref.read(proxiesActionProvider.notifier).updateGroupsDebounce();
     }, duration: const Duration(milliseconds: 5000));
     super.onLoaded(providerName);
   }
@@ -109,3 +104,4 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     super.onCrash(message);
   }
 }
+

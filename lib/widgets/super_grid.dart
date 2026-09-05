@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:math';
 
 import 'package:defer_pointer/defer_pointer.dart';
@@ -695,3 +695,5 @@ class _DeletableContainerState extends State<_DeletableContainer>
     );
   }
 }
+
+

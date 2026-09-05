@@ -1,4 +1,4 @@
-import 'package:fl_clash/enum/enum.dart';
+﻿import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/views/views.dart';
 import 'package:flutter/material.dart';
@@ -9,11 +9,12 @@ class Navigation {
   List<NavigationItem> getItems({
     bool openLogs = false,
     bool hasProxies = false,
+    bool showShop = true,
   }) {
     return [
       NavigationItem(
         keep: false,
-        icon: Icon(Icons.space_dashboard),
+        icon: const Icon(Icons.space_dashboard),
         label: PageLabel.dashboard,
         builder: (_) =>
             const DashboardView(key: GlobalObjectKey(PageLabel.dashboard)),
@@ -28,27 +29,13 @@ class Navigation {
             : [],
       ),
       NavigationItem(
-        icon: Icon(Icons.folder),
+        icon: const Icon(Icons.folder),
         label: PageLabel.profiles,
         builder: (_) =>
             const ProfilesView(key: GlobalObjectKey(PageLabel.profiles)),
       ),
       NavigationItem(
-        icon: const Icon(Icons.store),
-        label: PageLabel.shop,
-        builder: (_) =>
-            const ShopView(key: GlobalObjectKey(PageLabel.shop)),
-        modes: [NavigationItemMode.mobile, NavigationItemMode.desktop],
-      ),
-      NavigationItem(
-        icon: const Icon(Icons.person),
-        label: PageLabel.myProfile,
-        builder: (_) =>
-            const ProfileView(key: GlobalObjectKey(PageLabel.myProfile)),
-        modes: [NavigationItemMode.mobile, NavigationItemMode.desktop],
-      ),
-      NavigationItem(
-        icon: Icon(Icons.view_timeline),
+        icon: const Icon(Icons.view_timeline),
         label: PageLabel.requests,
         builder: (_) =>
             const RequestsView(key: GlobalObjectKey(PageLabel.requests)),
@@ -56,7 +43,7 @@ class Navigation {
         modes: [NavigationItemMode.more],
       ),
       NavigationItem(
-        icon: Icon(Icons.ballot),
+        icon: const Icon(Icons.ballot),
         label: PageLabel.connections,
         builder: (_) =>
             const ConnectionsView(key: GlobalObjectKey(PageLabel.connections)),
@@ -64,7 +51,7 @@ class Navigation {
         modes: [NavigationItemMode.more],
       ),
       NavigationItem(
-        icon: Icon(Icons.storage),
+        icon: const Icon(Icons.storage),
         label: PageLabel.resources,
         description: 'resourcesDesc',
         builder: (_) =>
@@ -77,14 +64,29 @@ class Navigation {
         builder: (_) => const LogsView(key: GlobalObjectKey(PageLabel.logs)),
         description: 'logsDesc',
         modes: openLogs
-            ? [NavigationItemMode.desktop, NavigationItemMode.more]
+            ? [NavigationItemMode.more]
             : [],
       ),
+      // 商店/工具共用同一槽位，通过 showShop 切换
+      if (showShop)
+        NavigationItem(
+          icon: const Icon(Icons.store),
+          label: PageLabel.shop,
+          builder: (_) => const ShopView(key: GlobalObjectKey(PageLabel.shop)),
+          modes: [NavigationItemMode.mobile, NavigationItemMode.desktop],
+        )
+      else
+        NavigationItem(
+          icon: const Icon(Icons.construction),
+          label: PageLabel.tools,
+          builder: (_) => const ToolsView(key: GlobalObjectKey(PageLabel.tools)),
+          modes: [NavigationItemMode.mobile, NavigationItemMode.desktop],
+        ),
       NavigationItem(
-        icon: Icon(Icons.construction),
-        label: PageLabel.tools,
-        builder: (_) => const ToolsView(key: GlobalObjectKey(PageLabel.tools)),
-        modes: [NavigationItemMode.more],
+        icon: const Icon(Icons.person_outline),
+        label: PageLabel.users,
+        builder: (_) => const UserView(key: GlobalObjectKey(PageLabel.profile)),
+        modes: [NavigationItemMode.mobile, NavigationItemMode.desktop],
       ),
     ];
   }
@@ -98,3 +100,4 @@ class Navigation {
 }
 
 final navigation = Navigation();
+

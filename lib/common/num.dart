@@ -1,4 +1,4 @@
-import 'dart:math';
+﻿import 'dart:math';
 
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/common.dart';
@@ -89,3 +89,4 @@ extension RectExt on Rect {
         bottom > rect.top;
   }
 }
+

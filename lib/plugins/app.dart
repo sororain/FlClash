@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
@@ -82,7 +82,7 @@ class App {
   Future<bool?> initShortcuts() async {
     return await methodChannel.invokeMethod<bool>(
       'initShortcuts',
-      appLocalizations.toggle,
+      currentAppLocalizations.toggle,
     );
   }
 
@@ -91,6 +91,22 @@ class App {
       'value': value,
     });
   }
+
+  Future<bool?> isBatteryOptimizationDisabled() async {
+    if (!Platform.isAndroid) return true;
+    return methodChannel.invokeMethod<bool>('isBatteryOptimizationDisabled');
+  }
+
+  Future<bool?> openBatteryOptimizationSettings() async {
+    if (!Platform.isAndroid) return false;
+    return methodChannel.invokeMethod<bool>('openBatteryOptimizationSettings');
+  }
+
+  Future<bool?> openAppSettings() async {
+    if (!Platform.isAndroid) return false;
+    return methodChannel.invokeMethod<bool>('openAppSettings');
+  }
 }
 
 final app = system.isAndroid ? App() : null;
+

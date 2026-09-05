@@ -1,4 +1,4 @@
-import 'package:fl_clash/common/common.dart';
+﻿import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/material.dart';
 
@@ -26,7 +26,7 @@ class SubscriptionInfoView extends StatelessWidget {
         ? DateTime.fromMillisecondsSinceEpoch(
             subscriptionInfo!.expire * 1000,
           ).show
-        : appLocalizations.infiniteTime;
+        : context.appLocalizations.infiniteTime;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -37,7 +37,7 @@ class SubscriptionInfoView extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          '$useShow / $totalShow · $expireShow',
+          '$useShow / $totalShow \u00B7 $expireShow',
           style: context.textTheme.labelMedium?.toLight,
         ),
         const SizedBox(height: 4),
@@ -45,3 +45,5 @@ class SubscriptionInfoView extends StatelessWidget {
     );
   }
 }
+
+

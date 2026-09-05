@@ -1,4 +1,4 @@
-export 'about.dart';
+﻿export 'about.dart';
 export 'access.dart';
 export 'application_setting.dart';
 export 'backup_and_restore.dart';
@@ -7,13 +7,12 @@ export 'connection/connections.dart';
 export 'connection/requests.dart';
 export 'dashboard/dashboard.dart';
 export 'developer.dart';
-export 'invite.dart';
 export 'logs.dart';
-export 'orders.dart';
-export 'profile.dart';
 export 'profiles/profiles.dart';
-export 'shop.dart';
 export 'proxies/proxies.dart';
 export 'resources.dart';
 export 'tools.dart';
-export 'wallet.dart';
+export 'package:fl_clash/iqoo/shop/shop.dart';
+export 'package:fl_clash/iqoo/pages/user.dart';
+
+

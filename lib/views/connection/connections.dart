@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
@@ -53,7 +53,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (mounted) {
         await _updateConnections();
-        timer = Timer(Duration(seconds: 1), () async {
+        timer = Timer(const Duration(seconds: 1), () async {
           _updateConnectionsTask();
         });
       }
@@ -89,7 +89,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView> {
   @override
   Widget build(BuildContext context) {
     return CommonScaffold(
-      title: appLocalizations.connections,
+      title: currentAppLocalizations.connections,
       onKeywordsUpdate: _onKeywordsUpdate,
       searchState: AppBarSearchState(onSearch: _onSearch),
       actions: _buildActions(),
@@ -99,8 +99,8 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView> {
           final connections = state.list;
           if (connections.isEmpty) {
             return NullStatus(
-              label: appLocalizations.nullTip(appLocalizations.connections),
-              illustration: ConnectionEmptyIllustration(),
+              label: currentAppLocalizations.nullTip(currentAppLocalizations.connections),
+              illustration: const ConnectionEmptyIllustration(),
             );
           }
           final items = connections
@@ -120,8 +120,8 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView> {
                       _handleBlockConnection(trackerInfo.id);
                     },
                   ),
-                  detailTitle: appLocalizations.details(
-                    appLocalizations.connection,
+                  detailTitle: currentAppLocalizations.details(
+                    currentAppLocalizations.connection,
                   ),
                 ),
               )
@@ -139,3 +139,5 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView> {
     );
   }
 }
+
+

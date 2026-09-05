@@ -1,4 +1,4 @@
-import 'dart:math' as math;
+﻿import 'dart:math' as math;
 
 import 'package:fl_clash/common/common.dart';
 import 'package:flutter/material.dart';
@@ -405,3 +405,5 @@ _Origin _getOrigin(List<double> offsets, int crossAxisCount) {
   }
   return origin;
 }
+
+

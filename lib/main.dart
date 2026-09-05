@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_clash/pages/error.dart';
@@ -29,3 +29,5 @@ Future<void> main() async {
     );
   }
 }
+
+

@@ -1,4 +1,4 @@
-import 'package:fl_clash/enum/enum.dart';
+﻿import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/material.dart';
 import 'color.dart';
 
@@ -19,3 +19,4 @@ extension TextStyleExtension on TextStyle {
         fontSize: fontSize! + size,
       );
 }
+

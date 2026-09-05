@@ -1,4 +1,4 @@
-import 'package:fl_clash/common/common.dart';
+﻿import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -58,7 +58,7 @@ class _NetworkSpeedState extends State<NetworkSpeed> {
                           child: InfoHeader(
                             padding: EdgeInsets.zero,
                             info: Info(
-                              label: appLocalizations.networkSpeed,
+                              label: context.appLocalizations.networkSpeed,
                               iconData: Icons.speed_sharp,
                             ),
                           ),
@@ -94,3 +94,5 @@ class _NetworkSpeedState extends State<NetworkSpeed> {
     );
   }
 }
+
+

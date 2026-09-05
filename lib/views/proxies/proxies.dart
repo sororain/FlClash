@@ -1,4 +1,4 @@
-import 'package:fl_clash/common/common.dart';
+﻿import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/models/state.dart';
@@ -48,7 +48,7 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
           items: [
             PopupMenuItemData(
               icon: Icons.tune,
-              label: appLocalizations.settings,
+              label: currentAppLocalizations.settings,
               onPressed: () {
                 showSheet(
                   context: context,
@@ -57,7 +57,7 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
                     return AdaptiveSheetScaffold(
                       type: type,
                       body: const ProxiesSetting(),
-                      title: appLocalizations.settings,
+                      title: context.appLocalizations.settings,
                     );
                   },
                 );
@@ -66,7 +66,7 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
             if (_hasProviders)
               PopupMenuItemData(
                 icon: Icons.poll_outlined,
-                label: appLocalizations.providers,
+                label: context.appLocalizations.providers,
                 onPressed: () {
                   showExtend(
                     context,
@@ -144,7 +144,7 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
       resizeToAvoidBottomInset: false,
       floatingActionButton: _buildFAB(),
       actions: _buildActions(),
-      title: appLocalizations.proxies,
+      title: context.appLocalizations.proxies,
       searchState: AppBarSearchState(onSearch: _onSearch),
       body: switch (proxiesType) {
         ProxiesType.tab => ProxiesTabView(key: _proxiesTabKey),
@@ -153,3 +153,5 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
     );
   }
 }
+
+

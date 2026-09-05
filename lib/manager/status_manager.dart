@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:collection';
 import 'dart:math';
 
@@ -259,3 +259,4 @@ class StatusManagerState extends State<StatusManager> {
 //     );
 //   }
 // }
+

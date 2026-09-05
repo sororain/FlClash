@@ -1,4 +1,4 @@
-import 'package:fl_clash/enum/enum.dart';
+﻿import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -201,6 +201,39 @@ abstract class ActionResult with _$ActionResult {
       _$ActionResultFromJson(json);
 }
 
+/// Parses a 0.8.96 core wire response (`{id, result, error}`) or a message
+/// batch call (`{method: message, arguments: [...]}`) envelope. The method is
+/// recovered from the `method#serial` id prefix.
+ActionResult actionResultFromWireJson(Map<String, dynamic> json) {
+  final id = json['id'] as String?;
+  ActionMethod? method;
+  if (id != null) {
+    final name = id.split('#').first;
+    for (final value in ActionMethod.values) {
+      if (value.name == name) {
+        method = value;
+        break;
+      }
+    }
+  }
+  final error = json['error'];
+  return ActionResult(
+    method: method ?? ActionMethod.message,
+    id: id,
+    data: error != null
+        ? (error is Map ? (error['message'] ?? error['code']) : error)
+        : json['result'],
+    code: error == null ? ResultType.success : ResultType.error,
+  );
+}
+
+/// Builds a 0.8.96 core method call envelope (`{id, method, arguments}`).
+Map<String, dynamic> coreMethodCallToJson(
+  String id,
+  ActionMethod method,
+  dynamic arguments,
+) => {'id': id, 'method': method.name, 'arguments': arguments};
+
 extension ActionResultExt on ActionResult {
   Result get toResult {
     if (code == ResultType.success) {
@@ -210,3 +243,4 @@ extension ActionResultExt on ActionResult {
     }
   }
 }
+

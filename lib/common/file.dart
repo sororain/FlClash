@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 extension FileExt on File {
   Future<void> safeCopy(String newPath) async {
@@ -36,3 +36,4 @@ extension FileSystemEntityExt on FileSystemEntity {
     await delete(recursive: recursive);
   }
 }
+

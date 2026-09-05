@@ -1,4 +1,4 @@
-import 'dart:math';
+﻿import 'dart:math';
 
 import 'package:flutter/material.dart';
 
@@ -122,3 +122,5 @@ class WavePainter extends CustomPainter {
         oldDelegate.waveColor != waveColor;
   }
 }
+
+

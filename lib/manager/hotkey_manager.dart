@@ -1,8 +1,8 @@
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/controller.dart';
+﻿import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/models/common.dart';
-import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,15 +31,16 @@ class _HotKeyManagerState extends ConsumerState<HotKeyManager> {
   Future<void> _handleHotKeyAction(HotAction action) async {
     switch (action) {
       case HotAction.mode:
-        appController.updateMode();
+        final currentMode = globalState.container.read(patchClashConfigProvider).mode;
+        globalState.container.read(setupActionProvider.notifier).changeMode(currentMode);
       case HotAction.start:
-        appController.updateStart();
+        globalState.container.read(setupActionProvider.notifier).updateStatus(!globalState.container.read(isStartProvider));
       case HotAction.view:
-        appController.updateVisible();
+        globalState.container.read(systemActionProvider.notifier).updateVisible();
       case HotAction.proxy:
-        appController.updateSystemProxy();
+        globalState.container.read(networkSettingProvider.notifier).update((s) => s.copyWith(systemProxy: !s.systemProxy));
       case HotAction.tun:
-        appController.updateTun();
+        globalState.container.read(patchClashConfigProvider.notifier).update((s) => s.copyWith.tun(enable: !s.tun.enable));
     }
   }
 
@@ -78,7 +79,7 @@ class _HotKeyManagerState extends ConsumerState<HotKeyManager> {
       child: Actions(
         actions: {
           CloseWindowIntent: CallbackAction<CloseWindowIntent>(
-            onInvoke: (_) => appController.handleBackOrExit(),
+            onInvoke: (_) => globalState.container.read(systemActionProvider.notifier).handleBackOrExit(),
           ),
           DoNothingIntent: CallbackAction<DoNothingIntent>(
             onInvoke: (_) => null,
@@ -94,3 +95,4 @@ class _HotKeyManagerState extends ConsumerState<HotKeyManager> {
     return _buildShortcuts(widget.child);
   }
 }
+

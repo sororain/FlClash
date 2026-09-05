@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 typedef AnimatedGridBuilder<T> = Widget Function(BuildContext, T item);
 
@@ -92,3 +92,5 @@ class AnimateGrid<T> extends StatelessWidget {
     });
   }
 }
+
+

@@ -1,4 +1,4 @@
-import 'iterable.dart';
+﻿import 'iterable.dart';
 
 typedef ValueCallback<T> = T Function();
 
@@ -79,3 +79,4 @@ class FixedMap<K, V> {
 
   Map<K, V> get map => Map.unmodifiable(_map);
 }
+

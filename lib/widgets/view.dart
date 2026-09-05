@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 
 class CommonView extends StatefulWidget {
   final List<Widget> actions;
@@ -18,3 +18,5 @@ class _CommonViewState extends State<CommonView> {
     return const Placeholder();
   }
 }
+
+

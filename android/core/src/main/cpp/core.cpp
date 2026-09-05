@@ -36,7 +36,7 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_follow_clash_core_Core_invokeAction(JNIEnv *env, jobject thiz, jstring data, jobject cb) {
     const auto interface = new_global(cb);
-    invokeAction(interface, get_string(data));
+    invokeMethod(interface, get_string(data));
 }
 
 extern "C"

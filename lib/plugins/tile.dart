@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/common/system.dart';
@@ -54,3 +54,4 @@ class Tile {
 }
 
 final tile = system.isAndroid ? Tile.instance : null;
+

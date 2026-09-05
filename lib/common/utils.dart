@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
@@ -355,3 +355,4 @@ class Utils {
 }
 
 final utils = Utils();
+

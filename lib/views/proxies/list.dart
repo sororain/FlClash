@@ -1,11 +1,10 @@
-import 'dart:math';
+﻿import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/controller.dart';
+import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/state.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/providers/config.dart';
-import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -88,7 +87,7 @@ class _ProxiesListViewState extends State<ProxiesListView> {
     } else {
       tempUnfoldSet.add(groupName);
     }
-    appController.updateCurrentUnfoldSet(tempUnfoldSet);
+    globalState.container.read(proxiesActionProvider.notifier).updateCurrentUnfoldSet(tempUnfoldSet);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _adjustHeader();
     });
@@ -197,7 +196,7 @@ class _ProxiesListViewState extends State<ProxiesListView> {
     if (_controller.position.maxScrollExtent == 0) {
       return 0;
     }
-    final currentGroups = appController.getCurrentGroups();
+    final currentGroups = globalState.container.read(currentGroupsStateProvider.select((s) => s.value));
     final findIndex = currentGroups.indexWhere(
       (item) => item.name == groupName,
     );
@@ -257,7 +256,7 @@ class _ProxiesListViewState extends State<ProxiesListView> {
 
   void _scrollToGroupSelected(String groupName) {
     final currentInitOffset = _getGroupOffset(groupName);
-    final currentGroups = appController.getCurrentGroups();
+    final currentGroups = globalState.container.read(currentGroupsStateProvider.select((s) => s.value));
     final proxies = currentGroups.getGroup(groupName)?.all;
     _jumpTo(
       currentInitOffset +
@@ -291,7 +290,7 @@ class _ProxiesListViewState extends State<ProxiesListView> {
         if (state.groups.isEmpty) {
           return NullStatus(
             illustration: ProxyEmptyIllustration(),
-            label: appLocalizations.nullTip(appLocalizations.proxies),
+            label: context.appLocalizations.nullTip(context.appLocalizations.proxies),
           );
         }
         final items = _buildItems(
@@ -422,7 +421,7 @@ class _ListHeaderState extends State<ListHeader> {
   Widget _buildIcon() {
     return Consumer(
       builder: (_, ref, child) {
-        final iconStyle = ref.watch(
+        final iconStyle = globalState.container.read(
           proxiesStyleSettingProvider.select((state) => state.iconStyle),
         );
         return switch (iconStyle) {
@@ -511,7 +510,7 @@ class _ListHeaderState extends State<ListHeader> {
                                   builder: (_, ref, _) {
                                     final proxyName = ref
                                         .watch(
-                                          getSelectedProxyNameProvider(
+                                          selectedProxyNameProvider(
                                             groupName,
                                           ),
                                         )
@@ -528,7 +527,7 @@ class _ListHeaderState extends State<ListHeader> {
                                             flex: 1,
                                             child: EmojiText(
                                               overflow: TextOverflow.ellipsis,
-                                              ' · $proxyName',
+                                              ' 璺?\$proxyName',
                                               style: context
                                                   .textTheme
                                                   .labelMedium
@@ -603,3 +602,5 @@ class _ListHeaderState extends State<ListHeader> {
     );
   }
 }
+
+

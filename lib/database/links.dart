@@ -1,4 +1,4 @@
-part of 'database.dart';
+﻿part of 'database.dart';
 
 @DataClassName('RawProfileRuleLink')
 @TableIndex(
@@ -40,13 +40,14 @@ extension RawProfileRuleLinkExt on RawProfileRuleLink {
 }
 
 extension ProfileRuleLinksCompanionExt on ProfileRuleLink {
-  ProfileRuleLinksCompanion toCompanion() {
+  ProfileRuleLinksCompanion toCompanion([String? order]) {
     return ProfileRuleLinksCompanion.insert(
       id: key,
       ruleId: ruleId,
       scene: Value(scene),
       profileId: Value(profileId),
-      order: Value(order),
+      order: Value(order ?? this.order),
     );
   }
 }
+

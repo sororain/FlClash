@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
@@ -19,13 +19,17 @@ class DAVClient {
     pingCompleter.complete(_ping());
   }
 
-  Future<bool> _ping() async {
+  Future<bool> ping() async {
     try {
       await client.ping();
       return true;
     } catch (_) {
       return false;
     }
+  }
+
+  Future<bool> _ping() async {
+    return ping();
   }
 
   String get root => '/$appName';
@@ -45,3 +49,4 @@ class DAVClient {
     return true;
   }
 }
+

@@ -1,4 +1,6 @@
+﻿import 'package:fl_clash/common/print.dart';
 import 'package:fl_clash/common/proxy.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:flutter/material.dart';
@@ -14,15 +16,32 @@ class ProxyManager extends ConsumerStatefulWidget {
 }
 
 class _ProxyManagerState extends ConsumerState<ProxyManager> {
+  Future<void> _pendingUpdate = Future.value();
+
   Future<void> _updateProxy(ProxyState proxyState) async {
     final isStart = proxyState.isStart;
     final systemProxy = proxyState.systemProxy;
     final port = proxyState.port;
+    bool? result;
     if (isStart && systemProxy) {
-      proxy?.startProxy(port, proxyState.bassDomain);
+      result = await proxy?.startProxy(port, proxyState.bassDomain);
     } else {
-      proxy?.stopProxy();
+      result = await proxy?.stopProxy();
     }
+    if (result == false) {
+      commonPrint.log('update system proxy failed', logLevel: LogLevel.warning);
+    }
+  }
+
+  void _scheduleUpdateProxy(ProxyState proxyState) {
+    _pendingUpdate = _pendingUpdate
+        .then((_) => _updateProxy(proxyState))
+        .catchError((Object error) {
+      commonPrint.log(
+        'update system proxy failed: $error',
+        logLevel: LogLevel.warning,
+      );
+    });
   }
 
   @override
@@ -32,7 +51,7 @@ class _ProxyManagerState extends ConsumerState<ProxyManager> {
       proxyStateProvider,
       (prev, next) {
         if (prev != next) {
-          _updateProxy(next);
+          _scheduleUpdateProxy(next);
         }
       },
       fireImmediately: true,
@@ -44,3 +63,4 @@ class _ProxyManagerState extends ConsumerState<ProxyManager> {
     return widget.child;
   }
 }
+

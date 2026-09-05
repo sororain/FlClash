@@ -1,6 +1,7 @@
-import 'dart:async';
+﻿import 'dart:async';
 
-import 'package:fl_clash/controller.dart';
+import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/widgets.dart';
 
 class CommonPopScope extends StatelessWidget {
@@ -56,7 +57,7 @@ class _SystemBackBlockState extends State<SystemBackBlock> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      appController.backBlock();
+      globalState.container.read(backBlockProvider.notifier).value = true;
     });
   }
 
@@ -64,7 +65,7 @@ class _SystemBackBlockState extends State<SystemBackBlock> {
   void dispose() {
     super.dispose();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      appController.unBackBlock();
+      globalState.container.read(backBlockProvider.notifier).value = false;
     });
   }
 
@@ -73,3 +74,5 @@ class _SystemBackBlockState extends State<SystemBackBlock> {
     return widget.child;
   }
 }
+
+

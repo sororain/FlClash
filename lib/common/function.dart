@@ -1,13 +1,13 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 
 class Debouncer {
-  final Map<FunctionTag, Timer?> _operations = {};
+  final Map<dynamic, Timer?> _operations = {};
 
   void call(
-    FunctionTag tag,
+    dynamic tag,
     Function func, {
     List<dynamic>? args,
     Duration? duration,
@@ -74,10 +74,10 @@ Future<T> retry<T>({
   int attempts = 0;
   while (attempts < maxAttempts) {
     final res = await task();
+    attempts++;
     if (!retryIf(res) || attempts >= maxAttempts) {
       return res;
     }
-    attempts++;
   }
   throw 'retry error';
 }
@@ -85,3 +85,4 @@ Future<T> retry<T>({
 final debouncer = Debouncer();
 
 final throttler = Throttler();
+

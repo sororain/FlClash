@@ -1,7 +1,7 @@
 import 'dart:async';
 
-    import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/controller.dart';
+import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/manager/window_manager.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -33,12 +33,25 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
     });
     ref.listenManual(configProvider, (prev, next) {
       if (prev != next) {
-        appController.savePreferencesDebounce();
+        ref.read(storeActionProvider.notifier).savePreferencesDebounce();
       }
     });
     ref.listenManual(needUpdateGroupsProvider, (prev, next) {
       if (prev != next) {
-        appController.updateGroupsDebounce();
+        ref.read(proxiesActionProvider.notifier).updateGroupsDebounce();
+      }
+    });
+    ref.listenManual(suspendProvider, (prev, next) {
+      final isStart = ref.read(isStartProvider);
+      if (prev != next && isStart) {
+        debouncer.call(FunctionTag.suspend, () async {
+          if (next == true) {
+            await coreController.stopListener();
+          } else {
+            await coreController.startListener();
+          }
+          ref.read(checkIpNumProvider.notifier).add();
+        });
       }
     });
     if (window == null) {
@@ -66,19 +79,32 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
     commonPrint.log('$state');
     if (state == AppLifecycleState.resumed) {
+      _checkBackgroundSync();
+      permissions.check();
       render?.resume();
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        appController.tryCheckIp();
+        ref.read(setupActionProvider.notifier).tryCheckIp();
         if (system.isAndroid) {
-          appController.tryStartCore();
+          ref.read(coreActionProvider.notifier).tryStartCore();
         }
+      });
+    }
+  }
+
+  /// 回到前台时检查是否错过了 20 分钟定时同步
+  void _checkBackgroundSync() {
+    final lastSync = globalState.lastSyncTime;
+    if (lastSync == null) return;
+    if (DateTime.now().difference(lastSync) >= const Duration(minutes: 20)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(profilesActionProvider.notifier).syncSubscriptionNow();
       });
     }
   }
 
   @override
   void didChangePlatformBrightness() {
-    appController.updateBrightness();
+    ref.read(themeActionProvider.notifier).updateBrightness();
   }
 
   @override
@@ -216,9 +242,8 @@ class AppSidebarContainer extends ConsumerWidget {
                                 )
                                 .toList(),
                             onDestinationSelected: (index) {
-                              appController.toPage(
-                                navigationItems[index].label,
-                              );
+                              ref.read(currentPageLabelProvider.notifier).value = 
+                                navigationItems[index].label;
                             },
                             extended: false,
                             selectedIndex: currentIndex,

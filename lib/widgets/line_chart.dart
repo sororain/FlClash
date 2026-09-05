@@ -1,4 +1,4 @@
-import 'dart:ui';
+﻿import 'dart:ui';
 
 import 'package:fl_clash/common/color.dart';
 import 'package:flutter/material.dart';
@@ -247,3 +247,5 @@ class LineChartPainter extends CustomPainter {
         oldDelegate.gradient != gradient;
   }
 }
+
+

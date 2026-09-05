@@ -1,4 +1,4 @@
-import 'package:fl_clash/common/common.dart';
+﻿import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -13,7 +13,7 @@ class IntranetIP extends StatelessWidget {
     return SizedBox(
       height: getWidgetHeight(1),
       child: CommonCard(
-        info: Info(label: appLocalizations.intranetIP, iconData: Icons.devices),
+        info: Info(label: context.appLocalizations.intranetIP, iconData: Icons.devices),
         onPressed: () {},
         child: Container(
           padding: baseInfoEdgeInsets.copyWith(top: 0),
@@ -32,7 +32,7 @@ class IntranetIP extends StatelessWidget {
                               text: Text(
                                 localIp.isNotEmpty
                                     ? localIp
-                                    : appLocalizations.noNetwork,
+                                    : context.appLocalizations.noNetwork,
                                 style: context.textTheme.bodyMedium?.toLight
                                     .adjustSize(1),
                                 maxLines: 1,
@@ -57,3 +57,5 @@ class IntranetIP extends StatelessWidget {
     );
   }
 }
+
+

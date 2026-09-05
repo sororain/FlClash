@@ -1,6 +1,6 @@
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/controller.dart';
+﻿import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/pages/scan.dart';
+import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -11,16 +11,16 @@ class AddProfileView extends StatelessWidget {
   const AddProfileView({super.key, required this.context});
 
   Future<void> _handleAddProfileFormFile() async {
-    appController.addProfileFormFile();
+    globalState.container.read(profilesActionProvider.notifier).addProfileFormFile();
   }
 
   Future<void> _handleAddProfileFormURL(String url) async {
-    appController.addProfileFormURL(url);
+    globalState.container.read(profilesActionProvider.notifier).addProfileFormURL(url);
   }
 
   Future<void> _toScan() async {
     if (system.isDesktop) {
-      appController.addProfileFormQrCode();
+      globalState.container.read(profilesActionProvider.notifier).addProfileFormQrCode();
       return;
     }
     final url = await BaseNavigator.push(context, const ScanPage());
@@ -35,15 +35,15 @@ class AddProfileView extends StatelessWidget {
     final url = await globalState.showCommonDialog<String>(
       child: InputDialog(
         autovalidateMode: AutovalidateMode.onUnfocus,
-        title: appLocalizations.importFromURL,
-        labelText: appLocalizations.url,
+        title: context.appLocalizations.importFromURL,
+        labelText: context.appLocalizations.url,
         value: '',
         validator: (value) {
           if (value == null || value.isEmpty) {
-            return appLocalizations.emptyTip('').trim();
+            return context.appLocalizations.emptyTip('').trim();
           }
           if (!value.isUrl) {
-            return appLocalizations.urlTip('').trim();
+            return context.appLocalizations.urlTip('').trim();
           }
           return null;
         },
@@ -60,20 +60,20 @@ class AddProfileView extends StatelessWidget {
       children: [
         ListItem(
           leading: const Icon(Icons.qr_code_sharp),
-          title: Text(appLocalizations.qrcode),
-          subtitle: Text(appLocalizations.qrcodeDesc),
+          title: Text(context.appLocalizations.qrcode),
+          subtitle: Text(context.appLocalizations.qrcodeDesc),
           onTap: _toScan,
         ),
         ListItem(
           leading: const Icon(Icons.upload_file_sharp),
-          title: Text(appLocalizations.file),
-          subtitle: Text(appLocalizations.fileDesc),
+          title: Text(context.appLocalizations.file),
+          subtitle: Text(context.appLocalizations.fileDesc),
           onTap: _handleAddProfileFormFile,
         ),
         ListItem(
           leading: const Icon(Icons.cloud_download_sharp),
-          title: Text(appLocalizations.url),
-          subtitle: Text(appLocalizations.urlDesc),
+          title: Text(context.appLocalizations.url),
+          subtitle: Text(context.appLocalizations.urlDesc),
           onTap: _toAdd,
         ),
       ],
@@ -138,3 +138,5 @@ class _URLFormDialogState extends State<URLFormDialog> {
     );
   }
 }
+
+

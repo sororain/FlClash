@@ -1,7 +1,6 @@
-import 'package:fl_clash/controller.dart';
+﻿import 'package:flutter/foundation.dart';
+
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/models.dart';
-import 'package:flutter/material.dart';
 
 class CommonPrint {
   static CommonPrint? _instance;
@@ -13,14 +12,13 @@ class CommonPrint {
     return _instance!;
   }
 
-  void log(String? text, {LogLevel logLevel = LogLevel.info}) {
-    final payload = '[APP] $text';
-    debugPrint(payload);
-    if (!appController.isAttach) {
-      return;
-    }
-    appController.addLog(Log.app(payload).copyWith(logLevel: logLevel));
+  void log(String? text, {LogLevel? logLevel}) {
+    // release 下只保留 warning/error 级日志；info/debug 级仅在 debug 构建打印
+    final isImportant = logLevel == LogLevel.warning || logLevel == LogLevel.error;
+    if (!kDebugMode && !isImportant) return;
+    debugPrint('[APP] $text');
   }
 }
 
 final commonPrint = CommonPrint();
+

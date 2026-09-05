@@ -1,7 +1,7 @@
 name: fl_clash
 description: A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.
 publish_to: 'none'
-version: 2.0.1+2026052801
+version: 2.1.1+2026090401
 environment:
   sdk: '>=3.8.0 <4.0.0'
 
@@ -21,13 +21,15 @@ dependencies:
   window_ext:
     path: plugins/window_ext
   launch_at_startup: ^0.5.1
-  json_annotation: ^4.9.0
-  file_picker: ^10.3.3
+  json_annotation: ^4.11.0
+  file_picker: ^11.0.2
   mobile_scanner: ^7.0.1
-  app_links: ^6.4.0
+  app_links: ^7.0.0
   win32_registry: ^2.0.0
   tray_manager:
     path: plugins/tray_manager/packages/tray_manager
+  wifi_ssid:
+    path: plugins/wifi_ssid
   collection: ^1.19.1
   animations: ^2.1.1
   package_info_plus: ^9.0.0
@@ -37,8 +39,9 @@ dependencies:
   ffi: ^2.1.4
   webdav_client: ^1.2.2
   dio: ^5.8.0+1
+  qr_flutter: ^4.1.0
   win32: ^5.5.1
-  re_editor: ^0.8.0
+  re_editor: 0.9.0
   re_highlight: ^0.0.3
   archive: ^4.0.7
   emoji_regex: ^0.0.5
@@ -48,33 +51,44 @@ dependencies:
   connectivity_plus: ^7.0.0
   screen_retriever: ^0.2.0
   defer_pointer: ^0.0.2
-  flutter_riverpod: ^3.0.0
-  riverpod_annotation: ^3.0.0
-  riverpod: ^3.0.0
-  material_color_utilities: ^0.11.1
+  flutter_riverpod: ^3.3.1
+  riverpod_annotation: ^4.0.2
+  riverpod: ^3.2.1
+  material_color_utilities: ^0.13.0
   flutter_js: ^0.8.7
   flutter_svg: ^2.1.0
   flutter_cache_manager: ^3.4.1
+  flutter_markdown: ^0.7.0
+  markdown: ^7.1.1
+  flutter_widget_from_html: ^0.17.2
   crypto: ^3.0.3
   yaml: ^3.1.3
   yaml_writer: ^2.1.0
   super_sliver_list: ^0.4.1
 
-  drift: ^2.29.0
-  drift_flutter: ^0.2.7
+  drift: ^2.31.0
+  drift_flutter: ^0.2.8
   fractional_indexing: ^1.0.0
+  reorderable_grid: ^1.0.13
+  smooth_sheets: ^1.0.2
+  rust_api:
+    path: plugins/rust_api
+  setup:
+    path: plugins/setup
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-  json_serializable: ^6.7.1
-  build_runner: ^2.7.1
+  json_serializable: ^6.8.0
+  build_runner: ^2.14.1
   args: ^2.4.2
-  freezed: ^3.2.0
-  riverpod_generator: ^3.0.0
-  riverpod_lint: ^3.0.0
+  freezed: ^3.2.5
+  riverpod_generator: ^4.0.3
+  riverpod_lint: ^3.1.3
 
-  drift_dev: ^2.29.0
+  drift_dev: ^2.31.0
+  intl_utils: ^2.8.14
 
 flutter:
   uses-material-design: true
@@ -84,6 +98,7 @@ flutter:
     - assets/images/
     - assets/images/empty/
     - assets/images/icon/
+    - assets/images/avatar/
   fonts:
     - family: JetBrainsMono
       fonts:

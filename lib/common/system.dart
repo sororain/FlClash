@@ -1,4 +1,4 @@
-import 'dart:ffi';
+﻿import 'dart:ffi';
 import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
@@ -64,11 +64,14 @@ class System {
     return true;
   }
 
+  static String _shellEscape(String value) {
+    return "'${value.replaceAll("'", "'\\''")}'";
+  }
+
   Future<AuthorizeCode> authorizeCore() async {
     if (system.isAndroid) {
       return AuthorizeCode.error;
     }
-    final corePath = appPath.corePath.replaceAll(' ', '\\\\ ');
     final isAdmin = await checkIsAdmin();
     if (isAdmin) {
       return AuthorizeCode.none;
@@ -83,7 +86,8 @@ class System {
     }
 
     if (system.isMacOS) {
-      final shell = 'chown root:admin $corePath; chmod +sx $corePath';
+      final escapedPath = _shellEscape(appPath.corePath);
+      final shell = 'chown root:admin $escapedPath && chmod +sx $escapedPath';
       final arguments = [
         '-e',
         'do shell script "$shell" with administrator privileges',
@@ -98,13 +102,18 @@ class System {
       final password = await globalState.showCommonDialog<String>(
         child: InputDialog(
           obscureText: true,
-          title: appLocalizations.pleaseInputAdminPassword,
+          title: currentAppLocalizations.pleaseInputAdminPassword,
           value: '',
         ),
       );
+      if (password == null || password.isEmpty) {
+        return AuthorizeCode.error;
+      }
+      final escapedPassword = _shellEscape(password);
+      final escapedCorePath = _shellEscape(appPath.corePath);
       final arguments = [
         '-c',
-        'echo "$password" | sudo -S chown root:root "$corePath" && echo "$password" | sudo -S chmod +sx "$corePath"',
+        'echo $escapedPassword | sudo -S chown root:root $escapedCorePath && echo $escapedPassword | sudo -S chmod +sx $escapedCorePath',
       ];
       final result = await Process.run(shell, arguments);
       if (result.exitCode != 0) {
@@ -125,6 +134,7 @@ class System {
       await SystemNavigator.pop();
     }
     await window?.close();
+    window?.forceExit();
   }
 }
 
@@ -225,9 +235,6 @@ class Windows {
   }
 
   Future<bool> registerService() async {
-    // 确保辅助服务端口 47890 未被残留进程占用
-    await _freeHelperPort();
-
     final status = await checkService();
 
     if (status == WindowsHelperServiceStatus.running) {
@@ -260,34 +267,14 @@ class Windows {
 
     final res = runas('cmd.exe', command);
 
-    await Future.delayed(Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 300));
     final retryStatus = await retry(
       task: checkService,
       maxAttempts: 5,
       retryIf: (status) => status != WindowsHelperServiceStatus.running,
-      delay: Duration(seconds: 1),
+      delay: const Duration(seconds: 1),
     );
     return res && retryStatus == WindowsHelperServiceStatus.running;
-  }
-
-  /// 查找并释放占用辅助服务端口 47890 的残留进程
-  Future<void> _freeHelperPort() async {
-    const port = 47890;
-    try {
-      final result = await Process.run('netstat', ['-ano']);
-      final lines = result.stdout.toString().split('\n');
-      for (final line in lines) {
-        if (!line.contains(':$port') || !line.contains('LISTENING')) continue;
-        final parts = line.trim().split(RegExp(r'\s+'));
-        final pid = int.tryParse(parts.last);
-        if (pid == null) continue;
-        // 跳过自身进程 ID 的比较（自身永远不可能是 0）
-        if (pid == 0) continue;
-        await Process.run('taskkill', ['/PID', pid.toString(), '/F']);
-        await Future.delayed(Duration(milliseconds: 300));
-        break;
-      }
-    } catch (_) {}
   }
 
   Future<bool> registerTask(String appName) async {
@@ -427,7 +414,7 @@ class MacOS {
       if (originDns == null) {
         return;
       }
-      final needAddDns = '223.5.5.5';
+      const needAddDns = '223.5.5.5';
       if (originDns.contains(needAddDns)) {
         return;
       }
@@ -446,3 +433,4 @@ class MacOS {
 }
 
 final macOS = system.isMacOS ? MacOS() : null;
+

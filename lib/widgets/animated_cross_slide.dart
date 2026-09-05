@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 enum CrossSlideState { showFirst, showSecond }
@@ -277,3 +277,5 @@ class _AnimatedCrossSlideState extends State<AnimatedCrossSlide>
     );
   }
 }
+
+

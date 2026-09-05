@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 
@@ -28,3 +28,4 @@ class SingleInstanceLock {
 }
 
 final singleInstanceLock = SingleInstanceLock();
+

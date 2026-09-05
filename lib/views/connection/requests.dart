@@ -1,4 +1,4 @@
-import 'package:fl_clash/common/common.dart';
+﻿import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -84,7 +84,7 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
   @override
   Widget build(BuildContext context) {
     return CommonScaffold(
-      title: appLocalizations.requests,
+      title: currentAppLocalizations.requests,
       searchState: AppBarSearchState(onSearch: _onSearch),
       onKeywordsUpdate: _onKeywordsUpdate,
       floatingActionButton: ValueListenableBuilder(
@@ -114,7 +114,7 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
           final requests = state.list;
           if (requests.isEmpty) {
             return NullStatus(
-              label: appLocalizations.nullTip(appLocalizations.requests),
+              label: currentAppLocalizations.nullTip(currentAppLocalizations.requests),
             );
           }
           final items = requests
@@ -125,8 +125,8 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
                   onClickKeyword: (value) {
                     context.commonScaffoldState?.addKeyword(value);
                   },
-                  detailTitle: appLocalizations.details(
-                    appLocalizations.request,
+                  detailTitle: context.appLocalizations.details(
+                    context.appLocalizations.request,
                   ),
                 ),
               )
@@ -163,3 +163,5 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
     );
   }
 }
+
+

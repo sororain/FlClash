@@ -1,4 +1,4 @@
-import 'package:fl_clash/common/common.dart';
+﻿import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -20,7 +20,8 @@ extension IntlExt on Intl {
 class HotKeyView extends StatelessWidget {
   const HotKeyView({super.key});
 
-  String getSubtitle(HotKeyAction hotKeyAction) {
+  String getSubtitle(BuildContext context, HotKeyAction hotKeyAction) {
+    final appLocalizations = context.appLocalizations;
     final key = hotKeyAction.key;
     if (key == null) {
       return appLocalizations.noHotKey;
@@ -39,7 +40,7 @@ class HotKeyView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BaseScaffold(
-      title: appLocalizations.hotkeyManagement,
+      title: context.appLocalizations.hotkeyManagement,
       body: ListView.builder(
         itemCount: HotAction.values.length,
         itemBuilder: (_, index) {
@@ -52,7 +53,7 @@ class HotKeyView extends StatelessWidget {
               return ListItem(
                 title: Text(IntlExt.actionMessage(hotAction.name)),
                 subtitle: Text(
-                  getSubtitle(hotKeyAction),
+                  getSubtitle(context, hotKeyAction),
                   style: context.textTheme.bodyMedium?.copyWith(
                     color: context.colorScheme.primary,
                   ),
@@ -132,8 +133,8 @@ class _HotKeyRecorderState extends ConsumerState<HotKeyRecorder> {
     if (currentHotkeyAction.key == null ||
         currentHotkeyAction.modifiers.isEmpty) {
       globalState.showMessage(
-        title: appLocalizations.tip,
-        message: TextSpan(text: appLocalizations.inputCorrectHotkey),
+        title: currentAppLocalizations.tip,
+        message: TextSpan(text: context.appLocalizations.inputCorrectHotkey),
       );
       return;
     }
@@ -147,8 +148,8 @@ class _HotKeyRecorderState extends ConsumerState<HotKeyRecorder> {
     );
     if (index != -1) {
       globalState.showMessage(
-        title: appLocalizations.tip,
-        message: TextSpan(text: appLocalizations.hotkeyConflict),
+        title: currentAppLocalizations.tip,
+        message: TextSpan(text: context.appLocalizations.hotkeyConflict),
       );
       return;
     }
@@ -187,14 +188,14 @@ class _HotKeyRecorderState extends ConsumerState<HotKeyRecorder> {
             onPressed: () {
               _handleRemove();
             },
-            child: Text(appLocalizations.remove),
+            child: Text(currentAppLocalizations.remove),
           ),
           const SizedBox(width: 8),
           TextButton(
             onPressed: () {
               _handleConfirm();
             },
-            child: Text(appLocalizations.confirm),
+            child: Text(currentAppLocalizations.confirm),
           ),
         ],
         child: ValueListenableBuilder(
@@ -219,7 +220,7 @@ class _HotKeyRecorderState extends ConsumerState<HotKeyRecorder> {
                       ],
                     )
                   : Text(
-                      appLocalizations.pressKeyboard,
+                      currentAppLocalizations.pressKeyboard,
                       style: context.textTheme.titleMedium,
                     ),
             );
@@ -247,3 +248,5 @@ class KeyboardKeyBox extends StatelessWidget {
     );
   }
 }
+
+

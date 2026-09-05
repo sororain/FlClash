@@ -1,5 +1,6 @@
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/controller.dart';
+﻿import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 
 import 'scaffold.dart';
@@ -46,7 +47,7 @@ Future<T?> showSheet<T>({
   required SheetBuilder builder,
   SheetProps props = const SheetProps(),
 }) {
-  final isMobile = appController.isMobile;
+  final isMobile = globalState.container.read(isMobileViewProvider);
   return switch (isMobile) {
     true => showModalBottomSheet<T>(
       context: context,
@@ -75,7 +76,7 @@ Future<T?> showExtend<T>(
   required SheetBuilder builder,
   ExtendProps props = const ExtendProps(),
 }) {
-  final isMobile = appController.isMobile;
+  final isMobile = globalState.container.read(isMobileViewProvider);
   return switch (isMobile || props.forceFull) {
     true => BaseNavigator.push(context, builder(context, SheetType.page)),
     false => showModalSideSheet<T>(
@@ -164,3 +165,5 @@ class _AdaptiveSheetScaffoldState extends State<AdaptiveSheetScaffold> {
     );
   }
 }
+
+

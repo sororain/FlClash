@@ -1,4 +1,4 @@
-import 'package:fl_clash/common/common.dart';
+﻿import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/widgets/pop_scope.dart';
@@ -208,12 +208,12 @@ class CommonScaffoldState extends State<CommonScaffold> {
                 startState.onSearch(value);
               }
             },
-            decoration: InputDecoration(hintText: appLocalizations.search),
+            decoration: InputDecoration(hintText: context.appLocalizations.search),
           )
         : Text(
             !_isEdit
                 ? widget.title!
-                : appLocalizations.selectedCountTitle(
+                : context.appLocalizations.selectedCountTitle(
                     '${_appBarState.value.editState?.editCount ?? 0}',
                   ),
           );
@@ -399,3 +399,5 @@ class BaseScaffold extends StatelessWidget {
     return CommonScaffold(body: body, title: title, actions: actions);
   }
 }
+
+

@@ -82,10 +82,6 @@ android {
     }
 }
 
-tasks.matching { it.name.startsWith("uploadCrashlytics") }.configureEach {
-    enabled = false
-}
-
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_17)

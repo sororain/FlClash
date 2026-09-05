@@ -164,6 +164,7 @@ const _$CoreEventTypeEnumMap = {
   CoreEventType.request: 'request',
   CoreEventType.loaded: 'loaded',
   CoreEventType.crash: 'crash',
+  CoreEventType.geoUpdate: 'geoUpdate',
 };
 
 _InvokeMessage _$InvokeMessageFromJson(Map<String, dynamic> json) =>
@@ -289,7 +290,7 @@ const _$ActionMethodEnumMap = {
   ActionMethod.getMemory: 'getMemory',
   ActionMethod.crash: 'crash',
   ActionMethod.setupConfig: 'setupConfig',
-  ActionMethod.deleteFile: 'deleteFile',
+  ActionMethod.clearEffect: 'clearEffect',
   ActionMethod.setState: 'setState',
   ActionMethod.startTun: 'startTun',
   ActionMethod.stopTun: 'stopTun',

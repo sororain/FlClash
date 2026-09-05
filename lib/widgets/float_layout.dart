@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class FloatLayout extends StatelessWidget {
   final Widget floatingWidget;
@@ -47,3 +47,5 @@ class FloatWrapper extends StatelessWidget {
     );
   }
 }
+
+

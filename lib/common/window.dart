@@ -84,6 +84,9 @@ class Window {
 
   Future<void> close() async {
     await windowManager.close();
+  }
+
+  void forceExit() {
     exit(0);
   }
 
@@ -95,3 +98,4 @@ class Window {
 }
 
 final window = system.isDesktop ? Window() : null;
+

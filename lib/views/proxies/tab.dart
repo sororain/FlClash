@@ -1,9 +1,8 @@
-import 'dart:math';
+﻿import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/common.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -54,12 +53,12 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
   }
 
   void scrollToGroupSelected() {
-    final currentGroupName = appController.getCurrentGroupName();
+    final currentGroupName = ref.read(currentProfileProvider)?.currentGroupName;
     _keyMap[currentGroupName]?.currentState?.scrollToSelected();
   }
 
   Future<void> delayTestCurrentGroup() async {
-    final currentGroupName = appController.getCurrentGroupName();
+    final currentGroupName = ref.read(currentProfileProvider)?.currentGroupName;
     final currentState = _keyMap[currentGroupName]?.currentState;
     await delayTest(currentState?.currentProxies ?? [], currentState?.testUrl);
   }
@@ -108,7 +107,7 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
                             );
                             if (index == -1) return;
                             _tabController?.animateTo(index);
-                            appController.updateCurrentGroupName(groupName);
+                            ref.read(proxiesActionProvider.notifier).updateCurrentGroupName(groupName);
                             Navigator.of(context).pop();
                           },
                           isSelected: groupName == currentGroupName,
@@ -119,7 +118,7 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
               },
             ),
           ),
-          title: appLocalizations.proxyGroup,
+          title: context.appLocalizations.proxyGroup,
         );
       },
     );
@@ -135,12 +134,12 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
         final currentIndex = _tabController?.index;
         groupIndex = currentIndex;
       }
-      final currentGroups = appController.getCurrentGroups();
+      final currentGroups = ref.read(currentGroupsStateProvider.select((s) => s.value));
       if (groupIndex == null || groupIndex > currentGroups.length) {
         return;
       }
       final currentGroup = currentGroups[groupIndex];
-      appController.updateCurrentGroupName(currentGroup.name);
+      ref.read(proxiesActionProvider.notifier).updateCurrentGroupName(currentGroup.name);
     });
   }
 
@@ -173,7 +172,7 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
     if (groups.isEmpty || _tabController == null) {
       return NullStatus(
         illustration: ProxyEmptyIllustration(),
-        label: appLocalizations.nullTip(appLocalizations.proxies),
+        label: currentAppLocalizations.nullTip(currentAppLocalizations.proxies),
       );
     }
     _keyMap = {};
@@ -290,7 +289,7 @@ class _ProxyGroupViewState extends ConsumerState<ProxyGroupView> {
   }
 
   PageStorageKey _getPageStorageKey() {
-    final profile = appController.currentProfile;
+    final profile = ref.read(currentProfileProvider);
     final key =
         '${profile?.id}_${ScrollPositionCacheKey.proxiesTabList.name}_${widget.group.name}';
     return ProxiesTabView.pageListStoreMap.updateCacheValue(
@@ -375,15 +374,19 @@ class _DelayTestButtonState extends State<DelayTestButton>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
+  bool _isTesting = false;
 
   Future<void> _healthcheck() async {
-    if (_controller.isAnimating) {
-      return;
-    }
+    if (_isTesting) return;
+    _isTesting = true;
     _controller.forward();
-    await widget.onClick();
-    if (mounted) {
-      _controller.reverse();
+    try {
+      await widget.onClick();
+    } finally {
+      if (mounted) {
+        _controller.reverse();
+      }
+      _isTesting = false;
     }
   }
 
@@ -417,9 +420,11 @@ class _DelayTestButtonState extends State<DelayTestButton>
       },
       child: CommonFloatingActionButton(
         onPressed: _healthcheck,
-        label: appLocalizations.delayTest,
+        label: currentAppLocalizations.delayTest,
         icon: const Icon(Icons.network_ping),
       ),
     );
   }
 }
+
+

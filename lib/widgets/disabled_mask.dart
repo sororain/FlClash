@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class DisabledMask extends StatefulWidget {
   final Widget child;
@@ -53,3 +53,5 @@ class _DisabledMaskState extends State<DisabledMask> {
     );
   }
 }
+
+

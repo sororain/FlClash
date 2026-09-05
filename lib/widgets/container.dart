@@ -1,4 +1,4 @@
-import 'dart:math' as math;
+﻿import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -71,3 +71,5 @@ class CommonSafeArea extends StatelessWidget {
         FlagProperty('bottom', value: bottom, ifTrue: 'avoid bottom padding'));
   }
 }
+
+

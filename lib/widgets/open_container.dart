@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 typedef CloseContainerActionCallback<S> = void Function({S? returnValue});
@@ -578,3 +578,5 @@ class _FlippableTweenSequence<T> extends TweenSequence<T> {
     return _flipped;
   }
 }
+
+

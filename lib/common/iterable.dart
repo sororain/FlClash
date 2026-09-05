@@ -1,4 +1,4 @@
-extension IterableExt<E> on Iterable<E> {
+﻿extension IterableExt<E> on Iterable<E> {
   Iterable<E> separated(E separator) sync* {
     final iterator = this.iterator;
     if (!iterator.moveNext()) return;
@@ -99,6 +99,18 @@ extension ListExt<T> on List<T> {
       add(value);
     }
   }
+
+  List<T> copyAndPut(T data, bool Function(T element) test) {
+    final newList = List<T>.from(this);
+    final index = newList.indexWhere(test);
+    if (index != -1) {
+      newList[index] = data;
+    } else {
+      newList.add(data);
+    }
+    return newList;
+  }
+
 }
 
 extension SetExt<T> on Set<T> {
@@ -155,3 +167,4 @@ extension MapExt<K, V> on Map<K, V> {
     return newMap;
   }
 }
+

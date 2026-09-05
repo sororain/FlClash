@@ -1,12 +1,10 @@
-import 'package:fl_clash/common/feature_flags.dart';
+﻿import 'package:fl_clash/iqoo/config/feature_flags.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
-import 'package:fl_clash/views/profiles/overwrite.dart';
+import 'package:fl_clash/views/profiles/overwrite/overwrite.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'add.dart';
 import 'edit.dart';
+import 'preview.dart';
 
 class ProfilesView extends StatefulWidget {
   const ProfilesView({super.key});
@@ -35,7 +34,7 @@ class _ProfilesViewState extends State<ProfilesView> {
           body: AddProfileView(
             context: globalState.navigatorKey.currentState!.context,
           ),
-          title: '${appLocalizations.add}${appLocalizations.profile}',
+          title: '${context.appLocalizations.add}${appLocalizations.profile}',
         );
       },
     );
@@ -50,7 +49,7 @@ class _ProfilesViewState extends State<ProfilesView> {
     final updateProfiles = profiles.map<Future>((profile) async {
       if (profile.type == ProfileType.file) return;
       try {
-        await appController.updateProfile(profile, showLoading: true);
+        await globalState.container.read(profilesActionProvider.notifier).updateProfile(profile, showLoading: true);
       } catch (e) {
         messages.add(
           UpdatingMessage(label: profile.realLabel, message: e.toString()),
@@ -104,6 +103,7 @@ class _ProfilesViewState extends State<ProfilesView> {
   Widget build(BuildContext context) {
     return Consumer(
       builder: (_, ref, _) {
+        final appLocalizations = context.appLocalizations;
         final isLoading = ref.watch(loadingProvider(LoadingTag.profiles));
         final state = ref.watch(profilesStateProvider);
         final spacing = 14.mAp;
@@ -178,25 +178,17 @@ class ProfileItem extends StatelessWidget {
     if (res != true) {
       return;
     }
-    await appController.deleteProfile(profile.id);
+    await globalState.container.read(profilesActionProvider.notifier).deleteProfile(profile.id);
   }
 
   Future<void> _handlePreview(BuildContext context) async {
-    final configMap = await appController.getProfileWithId(profile.id);
-    final content = await encodeYamlTask(configMap);
-    if (!context.mounted) {
-      return;
-    }
-
-    final previewPage = EditorPage(title: profile.realLabel, content: content);
-    BaseNavigator.push<String>(context, previewPage);
+    BaseNavigator.push<String>(context, PreviewProfileView(profile: profile));
   }
 
   Future updateProfile() async {
     if (profile.type == ProfileType.file) return;
-    try {} finally {}
-    await appController.loadingRun(() async {
-      await appController.updateProfile(profile, showLoading: true);
+    await globalState.loadingRun(() async {
+      await globalState.container.read(profilesActionProvider.notifier).updateProfile(profile, showLoading: true);
     }, tag: LoadingTag.profiles);
   }
 
@@ -219,8 +211,8 @@ class ProfileItem extends StatelessWidget {
       const SizedBox(height: 8),
       if (subscriptionInfo != null)
         SubscriptionInfoView(subscriptionInfo: subscriptionInfo),
-      Text(
-        profile.lastUpdateDate?.lastUpdateTimeDesc ?? '',
+      LastUpdateTimeText(
+        lastUpdateDate: profile.lastUpdateDate,
         style: context.textTheme.labelMedium?.toLighter,
       ),
     ];
@@ -229,8 +221,8 @@ class ProfileItem extends StatelessWidget {
   List<Widget> _buildFileProfileInfo(BuildContext context) {
     return [
       const SizedBox(height: 8),
-      Text(
-        profile.lastUpdateDate?.lastUpdateTimeDesc ?? '',
+      LastUpdateTimeText(
+        lastUpdateDate: profile.lastUpdateDate,
         style: context.textTheme.labelMedium?.toLight,
       ),
     ];
@@ -244,7 +236,7 @@ class ProfileItem extends StatelessWidget {
   }
 
   Future<void> _handleExportFile(BuildContext context) async {
-    final res = await appController.safeRun<bool>(() async {
+    final res = await globalState.safeRun<bool>(() async {
       final mFile = await profile.file;
       final value = await picker.saveFile(
         profile.realLabel,
@@ -318,6 +310,41 @@ class ProfileItem extends StatelessWidget {
                               ),
                             ],
                             PopupMenuItemData(
+                              icon: Icons.emergency_outlined,
+                              label: appLocalizations.more,
+                              subItems: [
+                                PopupMenuItemData(
+                                  icon: Icons.extension_outlined,
+                                  label: appLocalizations.override,
+                                  onPressed: () {
+                                    _handlePushGenProfilePage(
+                                      context,
+                                      profile.id,
+                                    );
+                                  },
+                                ),
+                                if (FeatureFlags.profileEditPreview &&
+                                    profile.type == ProfileType.url) ...[
+                                  PopupMenuItemData(
+                                    icon: Icons.copy,
+                                    label: appLocalizations.copyLink,
+                                    onPressed: () {
+                                      _handleCopyLink(context);
+                                    },
+                                  ),
+                                ],
+                                if (FeatureFlags.profileEditPreview) ...[
+                                  PopupMenuItemData(
+                                    icon: Icons.file_copy_outlined,
+                                    label: appLocalizations.exportFile,
+                                    onPressed: () {
+                                      _handleExportFile(context);
+                                    },
+                                  ),
+                                ],
+                              ],
+                            ),
+                            PopupMenuItemData(
                               danger: true,
                               icon: Icons.delete_outlined,
                               label: appLocalizations.delete,
@@ -372,6 +399,33 @@ class ProfileItem extends StatelessWidget {
   }
 }
 
+class LastUpdateTimeText extends StatelessWidget {
+  final DateTime? lastUpdateDate;
+  final TextStyle? style;
+
+  const LastUpdateTimeText({
+    super.key,
+    required this.lastUpdateDate,
+    this.style,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (lastUpdateDate == null) {
+      return Text('', style: style);
+    }
+    return TickBuilder(
+      duration: const Duration(minutes: 1),
+      builder: (context, _) {
+        return Text(
+          lastUpdateDate!.getLastUpdateTimeDesc(context),
+          style: style,
+        );
+      },
+    );
+  }
+}
+
 class ReorderableProfilesSheet extends StatefulWidget {
   final List<Profile> profiles;
   final SheetType type;
@@ -415,7 +469,7 @@ class _ReorderableProfilesSheetState extends State<ReorderableProfilesSheet> {
 
   void _handleSave() {
     Navigator.of(context).pop();
-    appController.reorder(profiles);
+    globalState.container.read(profilesActionProvider.notifier).reorder(profiles);
   }
 
   @override
@@ -452,11 +506,8 @@ class _ReorderableProfilesSheetState extends State<ReorderableProfilesSheet> {
               animation,
             );
           },
-          onReorder: (oldIndex, newIndex) {
+          onReorderItem: (oldIndex, newIndex) {
             setState(() {
-              if (oldIndex < newIndex) {
-                newIndex -= 1;
-              }
               final profile = profiles.removeAt(oldIndex);
               profiles.insert(newIndex, profile);
             });
@@ -471,3 +522,5 @@ class _ReorderableProfilesSheetState extends State<ReorderableProfilesSheet> {
     );
   }
 }
+
+

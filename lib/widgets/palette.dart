@@ -1,4 +1,4 @@
-import 'dart:math' as math;
+﻿import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -453,3 +453,5 @@ class _Computer {
   static double valueToVector(double l, double squareRadius, double centerY) =>
       (0.5 - l) * squareRadius / 0.5 + centerY;
 }
+
+

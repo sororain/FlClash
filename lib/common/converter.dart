@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:typed_data';
 
 class Uint8ListToListIntConverter extends Converter<Uint8List, List<int>> {
@@ -30,3 +30,4 @@ class _Uint8ListToListIntConverterSink implements Sink<Uint8List> {
 }
 
 final uint8ListToListIntConverter = Uint8ListToListIntConverter();
+

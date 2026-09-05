@@ -83,7 +83,7 @@ class AppPath {
 
   Future<String> get lockFilePath async {
     final homeDirPath = await appPath.homeDirPath;
-    return join(homeDirPath, 'Sororain.lock');
+    return join(homeDirPath, '$appName.lock');
   }
 
   Future<String> get configFilePath async {
@@ -151,3 +151,4 @@ class AppPath {
 }
 
 final appPath = AppPath();
+

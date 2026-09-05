@@ -1,4 +1,4 @@
-export 'activate_box.dart';
+﻿export 'activate_box.dart';
 export 'animate_grid.dart';
 export 'builder.dart';
 export 'button.dart';
@@ -7,6 +7,7 @@ export 'chip.dart';
 export 'color_scheme_box.dart';
 export 'container.dart';
 export 'dialog.dart';
+export 'dismissible.dart';
 export 'disabled_mask.dart';
 export 'donut_chart.dart';
 export 'effect.dart';
@@ -37,3 +38,5 @@ export 'tab.dart';
 export 'text.dart';
 export 'theme.dart';
 export 'wave.dart';
+
+

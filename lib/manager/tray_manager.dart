@@ -1,6 +1,6 @@
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/controller.dart';
-import 'package:fl_clash/providers/state.dart';
+﻿import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tray_manager/tray_manager.dart';
@@ -21,7 +21,12 @@ class _TrayContainerState extends ConsumerState<TrayManager> with TrayListener {
     trayManager.addListener(this);
     ref.listenManual(trayStateProvider, (prev, next) {
       if (prev != next) {
-        appController.updateTray();
+        tray?.update(
+          trayState: next,
+          traffic: ref.read(
+            trafficsProvider.select((state) => state.list.safeLast(Traffic())),
+          ),
+        );
       }
     });
     if (system.isMacOS) {
@@ -64,3 +69,4 @@ class _TrayContainerState extends ConsumerState<TrayManager> with TrayListener {
     super.dispose();
   }
 }
+

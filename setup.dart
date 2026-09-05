@@ -44,120 +44,302 @@ String get _appId => _buildConfig?['appId'] as String? ?? '728B3532-C74B-4870-90
 String get _packageName => _buildConfig?['packageName'] as String? ?? 'com.follow.clash';
 Map<String, dynamic> get _features => _buildConfig?['features'] as Map<String, dynamic>? ?? {};
 
+Future<String> _detectCurrentAppName() async {
+  // 从 constant.dart 中读取当前的 appName
+  final file = File(pathJoin(_current, 'lib', 'common', 'constant.dart'));
+  if (await file.exists()) {
+    final content = await file.readAsString();
+    final reg = RegExp(r"const appName = '([^']+)'");
+    final match = reg.firstMatch(content);
+    if (match != null) return match.group(1)!;
+  }
+  return 'FlClash'; // 默认值
+}
+
+Future<String> _detectCurrentHelperName() async {
+  final file = File(pathJoin(_current, 'lib', 'common', 'constant.dart'));
+  if (await file.exists()) {
+    final content = await file.readAsString();
+    final reg = RegExp(r"const appHelperService = '([^']+)'");
+    final match = reg.firstMatch(content);
+    if (match != null) return match.group(1)!;
+  }
+  return 'FlClashHelperService';
+}
+
+Future<String> _detectCurrentCoreName() async {
+  // 从 path.dart 中检测当前 core 文件名
+  final file = File(pathJoin(_current, 'lib', 'common', 'path.dart'));
+  if (await file.exists()) {
+    final content = await file.readAsString();
+    final reg = RegExp(r"join\(executableDirPath, '(.+)Core");
+    final match = reg.firstMatch(content);
+    if (match != null) return '${match.group(1)}Core';
+  }
+  return 'FlClashCore';
+}
+
+Future<String> _detectCurrentPackageName() async {
+  // 从 android/app/build.gradle.kts 中检测当前包名
+  final file = File(pathJoin(_current, 'android', 'app', 'build.gradle.kts'));
+  if (await file.exists()) {
+    final content = await file.readAsString();
+    final reg = RegExp(r'applicationId = "([^"]+)"');
+    final match = reg.firstMatch(content);
+    if (match != null) return match.group(1)!;
+  }
+  return 'com.follow.clash';
+}
+
+Future<Map<String, String>> _loadNameState() async {
+  final file = File(pathJoin(_current, 'build', 'name_state.json'));
+  if (!await file.exists()) return {};
+  try {
+    final json = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+    return json.map((k, v) => MapEntry(k, v.toString()));
+  } catch (_) {
+    return {};
+  }
+}
+
+Future<void> _saveNameState(Map<String, String> state) async {
+  final dir = Directory(pathJoin(_current, 'build'));
+  if (!await dir.exists()) {
+    await dir.create(recursive: true);
+  }
+  final file = File(pathJoin(_current, 'build', 'name_state.json'));
+  await file.writeAsString(const JsonEncoder.withIndent('  ').convert(state));
+}
+
 Future<void> _syncNames() async {
   final appName = _appName;
   final coreName = _coreName;
   final helperName = _helperName;
+  final packageName = _packageName;
+  final appId = _appId;
+
+  // 旧名来源优先级：状态文件（上次写入的名字，确定性）> 文件检测（仅首次 bootstrap）
+  final state = await _loadNameState();
+  final hasState = state.isNotEmpty;
+  String pick(String key, String detected) =>
+      (hasState ? state[key] : null) ?? detected;
+
+  final oldAppName = pick('appName', await _detectCurrentAppName());
+  final oldHelperName = pick('helperName', await _detectCurrentHelperName());
+  final oldCoreName = pick('coreName', await _detectCurrentCoreName());
+  final oldPackageName = pick('packageName', await _detectCurrentPackageName());
+  final oldAppNameLower = oldAppName.toLowerCase();
+
+  // 遗留名集合：上游默认 + 状态文件旧名 + 检测值。目标名会被移除。
+  // 覆盖两种场景：上游合并后文件回退成 FlClash*；正常改名链路的上一个名字。
+  final legacyCoreNames = <String>{'FlClashCore', oldCoreName}..remove(coreName);
+  final legacyHelperNames =
+      <String>{'FlClashHelperService', oldHelperName}..remove(helperName);
+  final legacyAppNames = <String>{'FlClash', oldAppName}..remove(appName);
+
+  // 按遗留名集合展开规则：old 模板里的占位符替换为每个遗留名，new 侧固定为目标名
+  List<(String, String)> coreRules(String oldTemplate, String newStr) => [
+        for (final legacy in legacyCoreNames)
+          (oldTemplate.replaceAll('FlClashCore', legacy), newStr),
+      ];
+
+  List<(String, String)> helperRules(String oldTemplate, String newStr) => [
+        for (final legacy in legacyHelperNames)
+          (oldTemplate.replaceAll('FlClashHelperService', legacy), newStr),
+      ];
+
   print('=== Syncing names from app_config.json ===');
-  print('  appName=$appName  coreName=$coreName  helperName=$helperName');
+  if (!hasState) {
+    print('  (build/name_state.json 不存在，本次从文件检测 bootstrap)');
+  }
+  print('  oldName=$oldAppName → newName=$appName');
+  print('  oldCore=$oldCoreName → newCore=$coreName');
+  print('  oldHelper=$oldHelperName → newHelper=$helperName');
+  if (legacyCoreNames.isNotEmpty || legacyHelperNames.isNotEmpty) {
+    print('  legacy: core=$legacyCoreNames helper=$legacyHelperNames');
+  }
+
+  // 替换辅助：用检测到的旧名称替换硬编码的 FlClash（appName 家族）
+  String p(String pattern) => pattern.replaceAll('FlClash', oldAppName);
 
   final tasks = <(String, List<(String, String)>)>[
     // windows/CMakeLists.txt
     (pathJoin(_current, 'windows', 'CMakeLists.txt'), [
-      ('project(FlClash LANGUAGES CXX)', 'project($appName LANGUAGES CXX)'),
-      ('set(BINARY_NAME "FlClash")', 'set(BINARY_NAME "$appName")'),
-      ('/FlClashCore.exe"', '/$coreName.exe"'),
-      ('/FlClashHelperService.exe"', '/$helperName.exe"'),
+      // ⚠️ 不替换 project(FlClash ...) — CMake target 名必须保持 FlClash
+      (p('set(BINARY_NAME "FlClash")'), 'set(BINARY_NAME "$appName")'),
+      ...coreRules('/FlClashCore.exe"', '/$coreName.exe"'),
+      ...helperRules('/FlClashHelperService.exe"', '/$helperName.exe"'),
+      // install 段落 - 不同格式
+      ...coreRules(
+        '"\${CLASH_DIR}/FlClashCore.exe"',
+        '"\${CLASH_DIR}/$coreName.exe"',
+      ),
+      ...helperRules(
+        '"\${CLASH_DIR}/FlClashHelperService.exe"',
+        '"\${CLASH_DIR}/$helperName.exe"',
+      ),
     ]),
     // windows/runner/Runner.rc
     (pathJoin(_current, 'windows', 'runner', 'Runner.rc'), [
-      ('VALUE "FileDescription", "FlClash"', 'VALUE "FileDescription", "$appName"'),
-      ('VALUE "OriginalFilename", "FlClash.exe"', 'VALUE "OriginalFilename", "$appName.exe"'),
+      (p('VALUE "FileDescription", "FlClash"'), 'VALUE "FileDescription", "$appName"'),
+      (p('VALUE "OriginalFilename", "FlClash.exe"'), 'VALUE "OriginalFilename", "$appName.exe"'),
       ('VALUE "ProductName", "clash"', 'VALUE "ProductName", "$appName"'),
       ('VALUE "InternalName", "clash"', 'VALUE "InternalName", "$appName"'),
+      ('VALUE "ProductName", "$oldAppName"', 'VALUE "ProductName", "$appName"'),
+      ('VALUE "InternalName", "$oldAppName"', 'VALUE "InternalName", "$appName"'),
     ]),
     // windows/runner/main.cpp
     (pathJoin(_current, 'windows', 'runner', 'main.cpp'), [
-      ('window.Create(L"FlClash"', 'window.Create(L"$appName"'),
+      (p('window.Create(L"FlClash"'), 'window.Create(L"$appName"'),
     ]),
     // make_config.yaml
     (pathJoin(_current, 'windows', 'packaging', 'exe', 'make_config.yaml'), [
       ('app_id: 728B3532-C74B-4870-9068-BE70FE12A3E6', 'app_id: $_appId'),
-      ('app_name: FlClash', 'app_name: $appName'),
-      ('display_name: FlClash', 'display_name: $appName'),
-      ('executable_name: FlClash.exe', 'executable_name: $appName.exe'),
-      ('output_base_file_name: FlClash.exe', 'output_base_file_name: $appName.exe'),
+      (p('app_name: FlClash'), 'app_name: $appName'),
+      (p('display_name: FlClash'), 'display_name: $appName'),
+      (p('executable_name: FlClash.exe'), 'executable_name: $appName.exe'),
+      (p('output_base_file_name: FlClash.exe'), 'output_base_file_name: $appName.exe'),
+      ('publisher: $oldAppName', 'publisher: $appName'),
     ]),
     // distribute_options.yaml
     (pathJoin(_current, 'distribute_options.yaml'), [
-      ("app_name: 'FlClash'", "app_name: '$appName'"),
+      (p("app_name: 'FlClash'"), "app_name: '$appName'"),
+    ]),
+    // build_config.yaml
+    (pathJoin(_current, 'build_config.yaml'), [
+      ...coreRules('core_name: FlClashCore', 'core_name: $coreName'),
+      ...helperRules('helper_name: FlClashHelperService', 'helper_name: $helperName'),
     ]),
     // inno_setup.iss
     (pathJoin(_current, 'windows', 'packaging', 'exe', 'inno_setup.iss'), [
-      ("['FlClash.exe', 'FlClashCore.exe', 'FlClashHelperService.exe']",
-       "['$appName.exe', '$coreName.exe', '$helperName.exe']"),
+      // 三个名字是一体的，按遗留名集合的笛卡尔积生成替换对
+      for (final legacyApp in legacyAppNames)
+        for (final legacyCore in legacyCoreNames)
+          for (final legacyHelper in legacyHelperNames)
+            (
+              "['$legacyApp.exe', '$legacyCore.exe', '$legacyHelper.exe']",
+              "['$appName.exe', '$coreName.exe', '$helperName.exe']",
+            ),
     ]),
     // lib/common/path.dart
     (pathJoin(_current, 'lib', 'common', 'path.dart'), [
-      ("FlClashCore\$executableExtension'", "$coreName\$executableExtension'"),
-      ("'FlClash.lock'", "'\$appName.lock'"),
+      ...coreRules("FlClashCore\$executableExtension'", "$coreName\$executableExtension'"),
+      (p("'FlClash.lock'"), "'\$appName.lock'"),
     ]),
     // lib/common/constant.dart
     (pathJoin(_current, 'lib', 'common', 'constant.dart'), [
-      ("const appName = 'FlClash'", "const appName = '$appName'"),
-      ("'/tmp/FlClashSocket_", "'/tmp/${appName}Socket_"),
-      ("'FlClashMainIsolate'", "'${appName}MainIsolate'"),
-      ("'FlClashServiceIsolate'", "'${appName}ServiceIsolate'"),
-      ("'FlClashHelperService'", "'$helperName'"),
+      (p("const appName = 'FlClash'"), "const appName = '$appName'"),
+      (p("'/tmp/FlClashSocket_"), "'/tmp/${appName}Socket_"),
+      (p("'FlClashMainIsolate'"), "'${appName}MainIsolate'"),
+      (p("'FlClashServiceIsolate'"), "'${appName}ServiceIsolate'"),
+      ...helperRules("'FlClashHelperService'", "'$helperName'"),
+      // ⚠️ packageName 不随 app_config 更改，需与 Kotlin 源码目录结构一致
     ]),
     // services/helper/src/service/windows.rs
     (pathJoin(pathJoin(_current, 'services', 'helper', 'src', 'service'), 'windows.rs'), [
-      ('"FlClashHelperService"', '"$helperName"'),
+      ...helperRules('"FlClashHelperService"', '"$helperName"'),
     ]),
     // linux/CMakeLists.txt
     (pathJoin(_current, 'linux', 'CMakeLists.txt'), [
-      ('set(BINARY_NAME "FlClash")', 'set(BINARY_NAME "$appName"'),
-      ('FlClashCore"', '$coreName"'),
+      (p('set(BINARY_NAME "FlClash")'), 'set(BINARY_NAME "$appName")'),
+      ...coreRules('FlClashCore"', '$coreName"'),
+      ('set(BINARY_NAME "$oldAppName"', 'set(BINARY_NAME "$appName"'),
     ]),
     // linux/runner/my_application.cc
     (pathJoin(_current, 'linux', 'runner', 'my_application.cc'), [
-      ('gtk_header_bar_set_title(header_bar, "FlClash")',
+      (p('gtk_header_bar_set_title(header_bar, "FlClash")'),
        'gtk_header_bar_set_title(header_bar, "$appName")'),
-      ('gtk_window_set_title(window, "FlClash")',
+      (p('gtk_window_set_title(window, "FlClash")'),
        'gtk_window_set_title(window, "$appName")'),
     ]),
     // macos/Runner/Info.plist
     (pathJoin(_current, 'macos', 'Runner', 'Info.plist'), [
-      ('<key>CFBundleExecutable</key>\n\t<string>FlClash</string>',
+      (p('<key>CFBundleExecutable</key>\n\t<string>FlClash</string>'),
        '<key>CFBundleExecutable</key>\n\t<string>$appName</string>'),
-      ('<key>CFBundleName</key>\n\t<string>FlClash</string>',
+      (p('<key>CFBundleName</key>\n\t<string>FlClash</string>'),
        '<key>CFBundleName</key>\n\t<string>$appName</string>'),
+      ('<string>$oldAppName needs location access', '<string>$appName needs location access'),
+      ('<string>FlClash needs location access', '<string>$appName needs location access'),
+    ]),
+    // macos/Runner/Configs/AppInfo.xcconfig
+    (pathJoin(_current, 'macos', 'Runner', 'Configs', 'AppInfo.xcconfig'), [
+      ('PRODUCT_NAME = $oldAppName', 'PRODUCT_NAME = $appName'),
+      ('PRODUCT_NAME = FlClash', 'PRODUCT_NAME = $appName'),
+      ('PRODUCT_BUNDLE_IDENTIFIER = $oldPackageName', 'PRODUCT_BUNDLE_IDENTIFIER = $_packageName'),
+      ('PRODUCT_BUNDLE_IDENTIFIER = com.follow.clash', 'PRODUCT_BUNDLE_IDENTIFIER = $_packageName'),
+    ]),
+    // macos/packaging/dmg/make_config.yaml
+    (pathJoin(_current, 'macos', 'packaging', 'dmg', 'make_config.yaml'), [
+      ('title: FlClash', 'title: $appName'),
+      ('title: $oldAppName', 'title: $appName'),
+      ('path: FlClash.app', 'path: $appName.app'),
+      ('path: $oldAppName.app', 'path: $appName.app'),
+    ]),
+    // macos/Runner.xcodeproj/project.pbxproj (Copy Core 引用 + 显示名称)
+    (pathJoin(_current, 'macos', 'Runner.xcodeproj', 'project.pbxproj'), [
+      ...coreRules('/* FlClashCore */', '/* $coreName */'),
+      ...coreRules('name = FlClashCore;', 'name = $coreName;'),
+      ...coreRules('path = ../libclash/macos/FlClashCore;', 'path = ../libclash/macos/$coreName;'),
+      ...coreRules('FlClashCore in Copy Core', '$coreName in Copy Core'),
+      ('INFOPLIST_KEY_CFBundleDisplayName = FlClash', 'INFOPLIST_KEY_CFBundleDisplayName = $appName'),
+      ('INFOPLIST_KEY_CFBundleDisplayName = $oldAppName', 'INFOPLIST_KEY_CFBundleDisplayName = $appName'),
     ]),
     // lib/common/window.dart
     (pathJoin(_current, 'lib', 'common', 'window.dart'), [
-      ("protocol.register('flclash')", "protocol.register('${appName.toLowerCase()}')"),
+      (p("protocol.register('flclash')"), "protocol.register('${appName.toLowerCase()}')"),
+      ("protocol.register('$oldAppNameLower')", "protocol.register('${appName.toLowerCase()}')"),
     ]),
     // core/tun/tun.go
     (pathJoin(_current, 'core', 'tun', 'tun.go'), [
-      ('Device:              "FlClash"', 'Device:              "$appName"'),
+      (p('Device:              "FlClash"'), 'Device:              "$appName"'),
     ]),
     // android/app/build.gradle.kts
     (pathJoin(_current, 'android', 'app', 'build.gradle.kts'), [
+      // ⚠️ 只改 applicationId，namespace 必须与源码目录结构一致
       ('applicationId = "com.follow.clash"', 'applicationId = "$_packageName"'),
+      ('applicationId = "$oldPackageName"', 'applicationId = "$_packageName"'),
     ]),
     // android/app/src/main/AndroidManifest.xml
     (pathJoin(pathJoin(_current, 'android', 'app', 'src', 'main'), 'AndroidManifest.xml'), [
-      ('android:label="FlClash"', 'android:label="$appName"'),
+      (p('android:label="FlClash"'), 'android:label="$appName"'),
     ]),
     // android/app/src/debug/AndroidManifest.xml
     (pathJoin(pathJoin(_current, 'android', 'app', 'src', 'debug'), 'AndroidManifest.xml'), [
-      ('android:label="FlClash Debug"', 'android:label="$appName Debug"'),
+      (p('android:label="FlClash Debug"'), 'android:label="$appName Debug"'),
     ]),
     // android/common/src/main/java/.../GlobalState.kt
     (pathJoin(pathJoin(pathJoin(_current, 'android', 'common', 'src', 'main'), 'java', 'com', 'follow', 'clash'), 'common', 'GlobalState.kt'), [
-      ('NOTIFICATION_CHANNEL = "FlClash"', 'NOTIFICATION_CHANNEL = "$appName"'),
+      (p('NOTIFICATION_CHANNEL = "FlClash"'), 'NOTIFICATION_CHANNEL = "$appName"'),
     ]),
     // android/service/src/main/java/.../VpnService.kt
     (pathJoin(pathJoin(pathJoin(_current, 'android', 'service', 'src', 'main'), 'java', 'com', 'follow', 'clash'), 'service', 'VpnService.kt'), [
-      ('setSession("FlClash")', 'setSession("$appName")'),
+      (p('setSession("FlClash")'), 'setSession("$appName")'),
     ]),
     // android/service/src/main/java/.../NotificationModule.kt
     (pathJoin(pathJoin(pathJoin(_current, 'android', 'service', 'src', 'main'), 'java', 'com', 'follow', 'clash'), 'service', 'modules', 'NotificationModule.kt'), [
-      ('setContentTitle("FlClash")', 'setContentTitle("$appName")'),
+      (p('setContentTitle("FlClash")'), 'setContentTitle("$appName")'),
     ]),
     // android/service/src/main/java/.../NotificationParams.kt
     (pathJoin(pathJoin(pathJoin(_current, 'android', 'service', 'src', 'main'), 'java', 'com', 'follow', 'clash'), 'service', 'models', 'NotificationParams.kt'), [
-      ('val title: String = "FlClash"', 'val title: String = "$appName"'),
+      (p('val title: String = "FlClash"'), 'val title: String = "$appName"'),
+    ]),
+    // plugins/setup/windows/CMakeLists.txt
+    (pathJoin(_current, 'plugins', 'setup', 'windows', 'CMakeLists.txt'), [
+      ...coreRules('/FlClashCore.exe"', '/$coreName.exe"'),
+      ...helperRules('/FlClashHelperService.exe"', '/$helperName.exe"'),
+    ]),
+    // plugins/setup/buildkit/cmake/buildkit.cmake
+    (pathJoin(pathJoin(_current, 'plugins', 'setup', 'buildkit', 'cmake'), 'buildkit.cmake'), [
+      ...coreRules('/FlClashCore.exe"', '/$coreName.exe"'),
+      ...coreRules('/linux/FlClashCore"', '/linux/$coreName"'),
+    ]),
+    // plugins/setup/linux/CMakeLists.txt
+    (pathJoin(_current, 'plugins', 'setup', 'linux', 'CMakeLists.txt'), [
+      ...coreRules('/linux/FlClashCore"', '/linux/$coreName"'),
+    ]),
+    // plugins/setup/macos/setup.podspec
+    (pathJoin(_current, 'plugins', 'setup', 'macos', 'setup.podspec'), [
+      ...coreRules('/macos/FlClashCore"', '/macos/$coreName"'),
     ]),
   ];
 
@@ -170,21 +352,59 @@ Future<void> _syncNames() async {
       print('  [SKIP] ${pathBasename(filePath)} (not found)');
       continue;
     }
-    var content = await file.readAsString();
-    var changed = false;
+    final original = await file.readAsString();
+    var content = original;
     for (final (oldStr, newStr) in pairs) {
+      // 检测出的旧名 == 目标名时会产生自替换对，跳过避免无变化的“已修改”标记
+      if (oldStr == newStr) continue;
       if (content.contains(oldStr)) {
         content = content.replaceAll(oldStr, newStr);
-        changed = true;
       }
     }
-    if (changed) {
+    if (content != original) {
       await file.writeAsString(content);
       print('  [OK] ${pathBasename(filePath)}');
     } else {
       print('  [--] ${pathBasename(filePath)} (already up to date)');
     }
   }
+
+  // 校验：回读关键文件，确认新名确实写入（上游合并改动格式时能立刻发现）
+  final checks = <(String, List<String>)>[
+    (pathJoin(_current, 'lib', 'common', 'constant.dart'), [appName, helperName]),
+    (pathJoin(_current, 'lib', 'common', 'path.dart'), [coreName]),
+    (pathJoin(_current, 'build_config.yaml'), [coreName, helperName]),
+    (
+      pathJoin(pathJoin(_current, 'services', 'helper', 'src', 'service'), 'windows.rs'),
+      [helperName],
+    ),
+  ];
+  final failures = <String>[];
+  for (final (filePath, tokens) in checks) {
+    final file = File(filePath);
+    if (!await file.exists()) continue;
+    final content = await file.readAsString();
+    for (final token in tokens) {
+      if (!content.contains(token)) {
+        failures.add('${pathBasename(filePath)} 缺少 "$token"');
+      }
+    }
+  }
+  if (failures.isNotEmpty) {
+    print('  [WARN] 以下文件可能未同步成功（上游合并改动了格式？请补充替换规则）：');
+    for (final failure in failures) {
+      print('    - $failure');
+    }
+  }
+
+  // 记录本次写入的名字，供下次运行作为旧名来源
+  await _saveNameState({
+    'appName': appName,
+    'coreName': coreName,
+    'helperName': helperName,
+    'packageName': packageName,
+    'appId': appId,
+  });
   print('=== Name sync complete ===');
 }
 
@@ -202,9 +422,9 @@ Future<void> _generateFeatureFlags() async {
     }
   }
   buffer.writeln('}');
-  final file = File(pathJoin(_current, 'lib', 'common', 'feature_flags.dart'));
+  final file = File(pathJoin(_current, 'lib', 'iqoo', 'config', 'feature_flags.dart'));
   await file.writeAsString(buffer.toString());
-  print('  [GEN] lib/common/feature_flags.dart');
+  print('  [GEN] lib/iqoo/config/feature_flags.dart');
 }
 
 enum Target { windows, linux, android, macos }
@@ -362,7 +582,8 @@ class Build {
   static Future<String> calcSha256(String filePath) async {
     final file = File(filePath);
     if (!await file.exists()) {
-      throw 'File not exists';
+      stderr.writeln('File not exists: $filePath');
+      exit(1);
     }
     if (Platform.isWindows) {
       final result = await Process.run('certutil', [
@@ -517,16 +738,13 @@ class Build {
       Build.getExecutable('flutter pub upgrade'),
       workingDirectory: distributorDir,
     );
-    await exec(
-      name: 'get distributor',
-      Build.getExecutable('dart pub global activate -s path $distributorDir'),
-    );
   }
 
   static void copyFile(String sourceFilePath, String destinationFilePath) {
     final sourceFile = File(sourceFilePath);
     if (!sourceFile.existsSync()) {
-      throw 'SourceFilePath not exists';
+      stderr.writeln('Source file not exists: $sourceFilePath');
+      exit(1);
     }
     final destinationFile = File(destinationFilePath);
     final destinationDirectory = destinationFile.parent;
@@ -547,12 +765,18 @@ class BuildCommand {
   String? archArg;
   String? outArg;
   String? envArg;
+  String? targetsArg;
+  bool verbose;
+  bool obfuscate;
 
   BuildCommand({
     required this.target,
     this.archArg,
     this.outArg,
     this.envArg,
+    this.targetsArg,
+    this.verbose = false,
+    this.obfuscate = false,
   });
 
   String get name => target.name;
@@ -562,30 +786,31 @@ class BuildCommand {
       .map((e) => e.arch!)
       .toList();
 
-  Future<void> _buildEnvFile(String env, {String? coreSha256}) async {
+  Future<void> _buildEnvFile(String env, {String? coreSha256, String? androidArch}) async {
     final data = {
       'APP_ENV': env,
       'CORE_SHA256': ?coreSha256,
+      'ANDROID_ARCH': ?androidArch,
     };
     final envFile = File(pathJoin(_current, 'env.json'))..create();
     await envFile.writeAsString(json.encode(data));
   }
 
   Future<void> _getLinuxDependencies(Arch arch) async {
-    await Build.exec(Build.getExecutable('sudo apt update -y'));
+    await Build.exec(Build.getExecutable('sudo DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt update -y'));
     await Build.exec(
-      Build.getExecutable('sudo apt install -y ninja-build libgtk-3-dev'),
+      Build.getExecutable('sudo DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt install -y ninja-build libgtk-3-dev'),
     );
     await Build.exec(
-      Build.getExecutable('sudo apt install -y libayatana-appindicator3-dev'),
+      Build.getExecutable('sudo DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt install -y libayatana-appindicator3-dev'),
     );
     await Build.exec(
-      Build.getExecutable('sudo apt-get install -y libkeybinder-3.0-dev'),
+      Build.getExecutable('sudo DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt-get install -y libkeybinder-3.0-dev'),
     );
-    await Build.exec(Build.getExecutable('sudo apt install -y locate'));
+    await Build.exec(Build.getExecutable('sudo DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt install -y locate'));
     if (arch == Arch.amd64) {
-      await Build.exec(Build.getExecutable('sudo apt install -y rpm patchelf'));
-      await Build.exec(Build.getExecutable('sudo apt install -y libfuse2'));
+      await Build.exec(Build.getExecutable('sudo DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt install -y rpm patchelf'));
+      await Build.exec(Build.getExecutable('sudo DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt install -y libfuse2'));
 
       final downloadName = arch == Arch.amd64 ? 'x86_64' : 'aarch64';
       await Build.exec(
@@ -601,6 +826,14 @@ class BuildCommand {
   }
 
   Future<void> _getMacosDependencies() async {
+    final which = Platform.isWindows ? 'where' : 'command';
+    final args = Platform.isWindows ? ['appdmg'] : ['-v', 'appdmg'];
+    final result = await Process.run(which, args);
+    if (result.exitCode == 0) {
+      print('appdmg already installed, skipping.');
+      return;
+    }
+    print('Installing appdmg (DMG creator)...');
     await Build.exec(Build.getExecutable('npm install -g appdmg'));
   }
 
@@ -608,42 +841,79 @@ class BuildCommand {
     required Target target,
     required String targets,
     String args = '',
+    String flutterArgs = '',
     required String env,
   }) async {
     await Build.getDistributor();
+    final distributorDir = pathJoin(
+      _current,
+      'plugins',
+      'flutter_distributor',
+      'packages',
+      'flutter_distributor',
+    );
+    final baseArgs = verbose ? 'verbose,dart-define-from-file=env.json' : 'dart-define-from-file=env.json';
+    final allFlutterArgs = flutterArgs.isNotEmpty ? '$baseArgs,$flutterArgs' : baseArgs;
     await Build.exec(
       name: name,
       Build.getExecutable(
-        'flutter_distributor package --skip-clean --platform ${target.name} --targets $targets --flutter-build-args=verbose,dart-define-from-file=env.json$args',
+        'dart run $distributorDir/bin/main.dart package --skip-clean --platform ${target.name} --targets $targets --flutter-build-args=$allFlutterArgs$args',
       ),
     );
-  }
-
-  Future<String?> get systemArch async {
-    if (Platform.isWindows) {
-      return Platform.environment['PROCESSOR_ARCHITECTURE'];
-    } else if (Platform.isLinux || Platform.isMacOS) {
-      final result = await Process.run('uname', ['-m']);
-      return result.stdout.toString().trim();
-    }
-    return null;
   }
 
   Future<void> run() async {
     final mode = target == Target.android ? Mode.lib : Mode.core;
     final String out = outArg ?? (target.same ? 'app' : 'core');
-    final archName = archArg;
     final env = envArg ?? 'pre';
-    final currentArches = arches
-        .where((element) => element.name == archName)
-        .toList();
-    final arch = currentArches.isEmpty ? null : currentArches.first;
 
-    if (arch == null && target != Target.android) {
-      throw 'Invalid arch parameter';
+    // 清除构建脚本的 macOS 隔离属性（防止 Xcode 构建时 Permission denied）
+    if (Platform.isMacOS) {
+      final scriptPaths = [
+        'plugins/setup/buildkit/run_build_tool.sh',
+        'plugins/setup/buildkit/build_pod.sh',
+      ];
+      for (final relPath in scriptPaths) {
+        final scriptFile = File(pathJoin(_current, relPath));
+        if (await scriptFile.exists()) {
+          try {
+            await Process.run(
+              'xattr', ['-d', 'com.apple.quarantine', scriptFile.path],
+            );
+            await Process.run('chmod', ['+x', scriptFile.path]);
+          } catch (_) {}
+        }
+      }
     }
-    if (target == Target.android && arch == null) {
-      throw 'Android requires --arch parameter: arm64, arm, or amd64';
+
+    // 自动检测架构（0.8.93 方式）
+    String? archName = archArg;
+    if (archName == null) {
+      if (Platform.isWindows) {
+        final pa = Platform.environment['PROCESSOR_ARCHITECTURE'] ?? 'AMD64';
+        archName = pa.toUpperCase() == 'ARM64' ? 'arm64' : 'amd64';
+      } else {
+        final result = await Process.run('uname', ['-m']);
+        final machine = (result.stdout as String).trim();
+        archName = machine == 'aarch64' ? 'arm64' : machine == 'x86_64' ? 'amd64' : machine;
+      }
+      print('Auto-detected architecture: $archName');
+    }
+
+    // Android 且未指定 --arch 时构建所有 ABI
+    final Arch? arch;
+    if (target == Target.android && archArg == null) {
+      print('Android: no --arch specified, will build all ABIs');
+      arch = null;
+    } else {
+      final matchingArches = arches
+          .where((element) => element.name == archName)
+          .toList();
+      arch = matchingArches.isEmpty ? null : matchingArches.first;
+      if (arch == null) {
+        stderr.writeln('Invalid arch parameter: $archName. Valid: ${arches.map((a) => a.name).join(', ')}');
+        exit(1);
+      }
     }
 
     final corePaths = await Build.buildCore(
@@ -658,7 +928,7 @@ class BuildCommand {
       coreSha256 = await Build.calcSha256(corePaths.first);
       await Build.buildHelper(target, coreSha256);
     }
-    await _buildEnvFile(env, coreSha256: coreSha256);
+    await _buildEnvFile(env, coreSha256: coreSha256, androidArch: arch?.name);
     if (out != 'app') {
       return;
     }
@@ -667,8 +937,9 @@ class BuildCommand {
       case Target.windows:
         _buildDistributor(
           target: target,
-          targets: 'exe,zip',
+          targets: targetsArg ?? 'exe,zip',
           args: ' --description $archName',
+          flutterArgs: obfuscate ? 'obfuscate,split-debug-info=build/debug-info' : '',
           env: env,
         );
         return;
@@ -686,6 +957,7 @@ class BuildCommand {
           targets: targets,
           args:
               ' --description $archName --build-target-platform $defaultTarget',
+          flutterArgs: obfuscate ? 'obfuscate,split-debug-info=build/debug-info' : '',
           env: env,
         );
         return;
@@ -693,13 +965,16 @@ class BuildCommand {
         final targetMap = {
           Arch.arm: 'arm',
           Arch.arm64: 'arm64',
-          Arch.amd64: 'x86_64',
+          Arch.amd64: 'x64',
         };
-        final archTarget = arch != null ? targetMap[arch] : 'arm64';
+        final archTarget = arch != null ? targetMap[arch] : null;
+        final obfuscateArgs = obfuscate
+            ? ' --obfuscate --split-debug-info=build/debug-info'
+            : '';
         await Build.exec(
           name: 'build flutter apk',
           Build.getExecutable(
-            'flutter build apk --release --split-per-abi --target-platform android-$archTarget --dart-define-from-file=env.json',
+            'flutter build apk --release${archTarget != null ? ' --target-platform android-$archTarget' : ''} --split-per-abi --dart-define-from-file=env.json$obfuscateArgs',
           ),
         );
         return;
@@ -707,8 +982,9 @@ class BuildCommand {
         await _getMacosDependencies();
         _buildDistributor(
           target: target,
-          targets: 'dmg',
+          targets: targetsArg ?? 'dmg',
           args: ' --description $archName',
+          flutterArgs: obfuscate ? 'obfuscate,split-debug-info=build/debug-info' : '',
           env: env,
         );
         return;
@@ -716,25 +992,70 @@ class BuildCommand {
   }
 }
 
+void _showHelp() {
+  print('''Usage: dart setup.dart <target> [options]
+
+Targets:
+  android    Build Android APK
+  linux      Build Linux deb/appimage/rpm
+  windows    Build Windows exe/zip
+  macos      Build macOS dmg
+
+Options:
+  --arch <arch>      Target architecture (arm64, amd64, arm). Default: auto-detect
+  --out <type>       Output type: app (full package) or core (Go core only)
+  --env <name>       Environment: pre (default) or stable
+  --targets <list>   Comma-separated package targets (e.g. exe,zip). Default per platform
+  --verbose, -v      Show verbose Flutter build output
+  --obfuscate        Obfuscate Dart code + strip debug info
+  --help, -h         Show this help message
+
+Examples:
+  dart setup.dart windows
+  dart setup.dart android --arch arm64
+  dart setup.dart linux --out core
+  dart setup.dart macos --targets dmg
+  dart setup.dart windows --targets exe
+''');
+}
+
 Future<void> main(List<String> args) async {
+  if (args.contains('--help') || args.contains('-h')) {
+    _showHelp();
+    return;
+  }
+
   await _loadBuildConfig();
   await _syncNames();
 
   if (args.isEmpty) {
-    print('Usage: dart setup.dart <target> [--arch <arch>] [--out <out>] [--env <env>]');
-    print('Targets: android, linux, windows, macos');
+    _showHelp();
     return;
   }
 
   final targetName = args[0];
   final target = Target.values.firstWhere(
     (t) => t.name == targetName,
-    orElse: () => throw 'Invalid target: $targetName. Valid: android, linux, windows, macos',
+    orElse: () {
+      stderr.writeln('Invalid target: $targetName. Valid: android, linux, windows, macos');
+      exit(1);
+    },
   );
+
+  // 交叉编译验证：只能构建当前平台或 Android
+  final hostOs = Platform.operatingSystem;
+  final targetOs = target.name;
+  if (targetOs != hostOs && targetOs != 'android') {
+    stderr.writeln('Cannot build "$targetOs" on $hostOs. Only android can be cross-built.');
+    exit(1);
+  }
 
   String? archValue;
   String? outValue;
   String? envValue;
+  String? targetsValue;
+  bool verbose = false;
+  bool obfuscate = false;
 
   for (var i = 1; i < args.length; i++) {
     switch (args[i]) {
@@ -747,6 +1068,16 @@ Future<void> main(List<String> args) async {
       case '--env':
         envValue = args[++i];
         break;
+      case '--targets':
+        targetsValue = args[++i];
+        break;
+      case '--verbose':
+      case '-v':
+        verbose = true;
+        break;
+      case '--obfuscate':
+        obfuscate = true;
+        break;
     }
   }
 
@@ -755,6 +1086,9 @@ Future<void> main(List<String> args) async {
     archArg: archValue,
     outArg: outValue,
     envArg: envValue,
+    targetsArg: targetsValue,
+    verbose: verbose,
+    obfuscate: obfuscate,
   );
   await command.run();
 }

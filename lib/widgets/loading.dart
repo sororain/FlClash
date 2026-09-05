@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class CommonCircleLoading extends StatefulWidget {
   final Color? color;
@@ -93,3 +93,5 @@ class _StarPainter extends CustomPainter {
     return oldDelegate.points != points || oldDelegate.color != color;
   }
 }
+
+

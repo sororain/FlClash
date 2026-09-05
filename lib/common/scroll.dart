@@ -1,4 +1,4 @@
-import 'dart:math';
+﻿import 'dart:math';
 import 'dart:ui';
 
 import 'package:fl_clash/common/common.dart';
@@ -207,3 +207,4 @@ class ReverseScrollPosition extends ScrollPositionWithSingleContext {
     return super.applyContentDimensions(minScrollExtent, maxScrollExtent);
   }
 }
+

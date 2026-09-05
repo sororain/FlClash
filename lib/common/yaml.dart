@@ -1,4 +1,4 @@
-import 'package:yaml_writer/yaml_writer.dart';
+﻿import 'package:yaml_writer/yaml_writer.dart';
 
 class Yaml {
   static Yaml? _instance;
@@ -16,3 +16,4 @@ class Yaml {
 }
 
 final yaml = Yaml();
+

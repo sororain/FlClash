@@ -1,4 +1,4 @@
-import 'dart:math';
+﻿import 'dart:math';
 
 import 'package:fl_clash/providers/app.dart';
 import 'package:flutter/material.dart';
@@ -73,3 +73,5 @@ class CommonModal extends ConsumerWidget {
     );
   }
 }
+
+

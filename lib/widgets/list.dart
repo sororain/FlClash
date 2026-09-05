@@ -1,7 +1,9 @@
+﻿import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/widgets/inherited.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -303,7 +305,7 @@ class ListItem<T> extends StatelessWidget {
         // openElevation: 0,
         closedBuilder: (_, action) {
           openAction() async {
-            final isMobile = appController.isMobile;
+            final isMobile = globalState.container.read(isMobileViewProvider);
             if (!isMobile || kDebugMode) {
               final res = await showExtend(
                 context,
@@ -462,7 +464,7 @@ class ListHeader extends StatelessWidget {
                 Text(
                   title,
                   style: context.textTheme.labelLarge?.copyWith(
-                    color: context.colorScheme.onSurfaceVariant.opacity80,
+                    color: context.colorScheme.primary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -745,3 +747,166 @@ class CommonSelectedInputListItem extends StatelessWidget {
     );
   }
 }
+
+class DecorationListItem extends StatelessWidget {
+  final Widget title;
+  final Widget? subtitle;
+  final Widget? leading;
+  final Widget? trailing;
+  final bool? isSelected;
+  final double? horizontalTitleGap;
+  final EdgeInsetsGeometry? contentPadding;
+  final VoidCallback? onPressed;
+  final double? minVerticalPadding;
+  final bool invalid;
+
+  const DecorationListItem({
+    super.key,
+    this.contentPadding,
+    required this.title,
+    this.leading,
+    this.trailing,
+    this.subtitle,
+    this.isSelected,
+    this.onPressed,
+    this.horizontalTitleGap,
+    this.minVerticalPadding,
+    this.invalid = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final proxyDecorator =
+        ProxyDecoratorProvider.of(context)?.isProxyDecorator ?? false;
+    final position = ItemPositionProvider.of(context)?.position;
+    final isEnd = [
+      ItemPosition.end,
+      ItemPosition.startAndEnd,
+    ].contains(position);
+    // 按位置计算合并圆角：首项圆上角、末项圆下角、中间直角，多项融为一体；
+    // 未提供位置时保持原有全圆角外观
+    final borderRadius = switch (position) {
+      ItemPosition.start =>
+        const BorderRadius.vertical(top: Radius.circular(24)),
+      ItemPosition.end =>
+        const BorderRadius.vertical(bottom: Radius.circular(24)),
+      ItemPosition.middle => BorderRadius.zero,
+      ItemPosition.startAndEnd || null => const BorderRadius.all(
+          Radius.circular(24),
+        ),
+    };
+    return CommonCard(
+      borderRadius: borderRadius,
+      isSelected: isSelected,
+      padding: EdgeInsets.zero,
+      type: CommonCardType.filled,
+      onPressed: proxyDecorator ? null : onPressed,
+      child: LayoutBuilder(
+        builder: (_, constraints) {
+          final isInfinite = constraints.maxHeight >= double.infinity;
+          final tile = ListTile(
+            leading: leading,
+            contentPadding:
+                contentPadding ?? const EdgeInsets.only(right: 16, left: 16),
+            title: title,
+            subtitle: subtitle,
+            minVerticalPadding: minVerticalPadding ?? 6,
+            minTileHeight: 54,
+            horizontalTitleGap: horizontalTitleGap,
+            trailing: trailing,
+          );
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Flexible(
+                fit: isInfinite ? FlexFit.loose : FlexFit.tight,
+                child: tile,
+              ),
+              if (!invalid && proxyDecorator != true && !isEnd)
+                const Divider(height: 0, indent: 14, endIndent: 14),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class SelectedDecorationListItem extends StatelessWidget {
+  final bool isSelected;
+  final bool isEditing;
+  final Widget title;
+  final Widget? subtitle;
+  final VoidCallback onSelected;
+  final VoidCallback onPressed;
+  final double? horizontalTitleGap;
+  final Widget? leading;
+  final bool invalid;
+  final double? minVerticalPadding;
+
+  const SelectedDecorationListItem({
+    super.key,
+    required this.isSelected,
+    required this.onSelected,
+    this.horizontalTitleGap,
+    this.isEditing = false,
+    this.invalid = false,
+    required this.title,
+    required this.onPressed,
+    this.minVerticalPadding,
+    this.subtitle,
+    this.leading,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return DecorationListItem(
+      title: title,
+      minVerticalPadding: minVerticalPadding,
+      contentPadding: const EdgeInsets.only(left: 16, right: 0),
+      isSelected: isSelected,
+      invalid: invalid,
+      leading: leading,
+      horizontalTitleGap: horizontalTitleGap,
+      onPressed: () {
+        if (isEditing) {
+          onSelected();
+          return;
+        }
+        onPressed();
+      },
+      subtitle: subtitle,
+      trailing: CommonCheckBox(
+        value: isSelected,
+        isCircle: true,
+        onChanged: (_) {
+          onSelected();
+        },
+      ),
+    );
+  }
+}
+
+Widget generateSectionV3({
+  String? title,
+  required Iterable<Widget> items,
+  List<Widget>? actions,
+}) {
+  final genItems = items.mapIndexed<Widget>((index, item) {
+    final position = ItemPosition.get(index, items.length);
+    if (position != ItemPosition.middle) {
+      return ItemPositionProvider(position: position, child: item);
+    }
+    return item;
+  });
+  return Column(
+    children: [
+      if (items.isNotEmpty && title != null)
+        ListHeader(title: title, actions: actions),
+      Column(children: [...genItems]),
+    ],
+  );
+}
+
+

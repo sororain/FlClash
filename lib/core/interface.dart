@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 
 import 'package:fl_clash/common/common.dart';
@@ -68,7 +68,7 @@ mixin CoreInterface {
 
   FutureOr<bool> closeConnection(String id);
 
-  FutureOr<String> deleteFile(String path);
+  FutureOr<String> clearEffect(int profileId);
 
   FutureOr<bool> closeConnections();
 
@@ -125,7 +125,7 @@ abstract class CoreHandlerInterface with CoreInterface {
   Future<bool> init(InitParams params) async {
     return await _invoke<bool>(
           method: ActionMethod.initClash,
-          data: json.encode(params),
+          data: params.toJson(),
         ) ??
         false;
   }
@@ -156,7 +156,7 @@ abstract class CoreHandlerInterface with CoreInterface {
   Future<String> updateConfig(UpdateParams updateParams) async {
     return await _invoke<String>(
           method: ActionMethod.updateConfig,
-          data: json.encode(updateParams),
+          data: updateParams.toJson(),
         ) ??
         '';
   }
@@ -171,7 +171,7 @@ abstract class CoreHandlerInterface with CoreInterface {
   Future<String> setupConfig(SetupParams setupParams) async {
     return await _invoke<String>(
           method: ActionMethod.setupConfig,
-          data: json.encode(setupParams),
+          data: setupParams.toJson(),
         ) ??
         '';
   }
@@ -195,31 +195,31 @@ abstract class CoreHandlerInterface with CoreInterface {
   Future<String> changeProxy(ChangeProxyParams changeProxyParams) async {
     return await _invoke<String>(
           method: ActionMethod.changeProxy,
-          data: json.encode(changeProxyParams),
+          data: changeProxyParams.toJson(),
         ) ??
         '';
   }
 
   @override
   Future<String> getExternalProviders() async {
-    return await _invoke<String>(method: ActionMethod.getExternalProviders) ??
-        '';
+    final res = await _invoke<List>(method: ActionMethod.getExternalProviders);
+    return json.encode(res ?? []);
   }
 
   @override
   Future<String> getExternalProvider(String externalProviderName) async {
-    return await _invoke<String>(
-          method: ActionMethod.getExternalProvider,
-          data: externalProviderName,
-        ) ??
-        '';
+    final res = await _invoke<Map>(
+      method: ActionMethod.getExternalProvider,
+      data: externalProviderName,
+    );
+    return res != null ? json.encode(res) : '';
   }
 
   @override
   Future<String> updateGeoData(UpdateGeoDataParams params) async {
     return await _invoke<String>(
           method: ActionMethod.updateGeoData,
-          data: json.encode(params),
+          data: params.geoType,
         ) ??
         '';
   }
@@ -231,7 +231,7 @@ abstract class CoreHandlerInterface with CoreInterface {
   }) async {
     return await _invoke<String>(
           method: ActionMethod.sideLoadExternalProvider,
-          data: json.encode({'providerName': providerName, 'data': data}),
+          data: {'providerName': providerName, 'data': data},
         ) ??
         '';
   }
@@ -247,7 +247,8 @@ abstract class CoreHandlerInterface with CoreInterface {
 
   @override
   Future<String> getConnections() async {
-    return await _invoke<String>(method: ActionMethod.getConnections) ?? '';
+    final res = await _invoke<Map>(method: ActionMethod.getConnections);
+    return json.encode(res ?? {});
   }
 
   @override
@@ -271,25 +272,28 @@ abstract class CoreHandlerInterface with CoreInterface {
 
   @override
   Future<String> getTotalTraffic(bool onlyStatisticsProxy) async {
-    return await _invoke<String>(
-          method: ActionMethod.getTotalTraffic,
-          data: onlyStatisticsProxy,
-        ) ??
-        '';
+    final res = await _invoke<Map>(
+      method: ActionMethod.getTotalTraffic,
+      data: onlyStatisticsProxy,
+    );
+    return json.encode(res ?? {'up': 0, 'down': 0});
   }
 
   @override
   Future<String> getTraffic(bool onlyStatisticsProxy) async {
-    return await _invoke<String>(
-          method: ActionMethod.getTraffic,
-          data: onlyStatisticsProxy,
-        ) ??
-        '';
+    final res = await _invoke<Map>(
+      method: ActionMethod.getTraffic,
+      data: onlyStatisticsProxy,
+    );
+    return json.encode(res ?? {'up': 0, 'down': 0});
   }
 
   @override
-  Future<String> deleteFile(String path) async {
-    return await _invoke<String>(method: ActionMethod.deleteFile, data: path) ??
+  Future<String> clearEffect(int profileId) async {
+    return await _invoke<String>(
+          method: ActionMethod.clearEffect,
+          data: profileId,
+        ) ??
         '';
   }
 
@@ -325,12 +329,14 @@ abstract class CoreHandlerInterface with CoreInterface {
       'timeout': httpTimeoutDuration.inMilliseconds,
       'test-url': url,
     };
-    return await _invoke<String>(
-          method: ActionMethod.asyncTestDelay,
-          data: json.encode(delayParams),
-          timeout: Duration(seconds: 6),
-        ) ??
-        json.encode(Delay(name: proxyName, value: -1, url: url));
+    final res = await _invoke<Map>(
+      method: ActionMethod.asyncTestDelay,
+      data: delayParams,
+      timeout: Duration(seconds: 6),
+    );
+    return res != null
+        ? json.encode(res)
+        : json.encode(Delay(name: proxyName, value: -1, url: url));
   }
 
   @override
@@ -344,6 +350,8 @@ abstract class CoreHandlerInterface with CoreInterface {
 
   @override
   Future<String> getMemory() async {
-    return await _invoke<String>(method: ActionMethod.getMemory) ?? '';
+    final res = await _invoke(method: ActionMethod.getMemory);
+    return res?.toString() ?? '';
   }
 }
+

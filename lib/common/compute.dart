@@ -1,4 +1,4 @@
-import 'package:fl_clash/common/common.dart';
+﻿import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 
@@ -108,3 +108,4 @@ DelayState computeProxyDelayState({
   final delay = currentDelayMap[state.proxyName];
   return DelayState(delay: delay ?? 0, group: state.group);
 }
+

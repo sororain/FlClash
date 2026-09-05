@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 extension NetworkInterfaceExt on NetworkInterface {
   bool get isWifi {
@@ -23,3 +23,4 @@ extension InternetAddressExt on InternetAddress {
     return type == InternetAddressType.IPv4;
   }
 }
+

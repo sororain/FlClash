@@ -1,4 +1,4 @@
-import 'dart:math';
+﻿import 'dart:math';
 import 'dart:ui';
 
 import 'package:fl_clash/common/constant.dart';
@@ -146,3 +146,5 @@ class BarChartPainter extends CustomPainter {
         oldDelegate.newData != newData;
   }
 }
+
+

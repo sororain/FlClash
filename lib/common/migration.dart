@@ -1,4 +1,4 @@
-import 'package:fl_clash/common/common.dart';
+﻿import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
 
 class Migration {
@@ -51,3 +51,4 @@ class Migration {
 }
 
 final migration = Migration();
+

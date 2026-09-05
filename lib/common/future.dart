@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:ui';
 
 import 'package:fl_clash/common/common.dart';
@@ -37,3 +37,4 @@ extension CompleterExt<T> on Completer<T> {
     complete(value);
   }
 }
+

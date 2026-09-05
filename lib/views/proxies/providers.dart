@@ -1,13 +1,12 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/controller.dart';
+import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/state.dart';
 import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/models/core.dart';
-import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,16 +24,16 @@ class ProvidersView extends ConsumerStatefulWidget {
 
 class _ProvidersViewState extends ConsumerState<ProvidersView> {
   Future<void> _updateProviders() async {
-    final providers = ref.read(providersProvider);
+    final providers = globalState.container.read(providersProvider);
     final List<UpdatingMessage> messages = [];
     final updateProviders = providers.map<Future>((provider) async {
-      final message = await appController.updateProvider(provider);
+      final message = await globalState.container.read(proxiesActionProvider.notifier).updateProvider(provider);
       if (message.isNotEmpty) {
         messages.add(UpdatingMessage(label: provider.name, message: message));
       }
     });
     await Future.wait(updateProviders);
-    appController.updateGroupsDebounce();
+    globalState.container.read(proxiesActionProvider.notifier).updateGroupsDebounce();
     if (messages.isNotEmpty) {
       globalState.showAllUpdatingMessagesDialog(messages);
     }
@@ -42,7 +41,7 @@ class _ProvidersViewState extends ConsumerState<ProvidersView> {
 
   @override
   Widget build(BuildContext context) {
-    final providers = ref.watch(providersProvider);
+    final providers = globalState.container.read(providersProvider);
     final proxyProviders = providers
         .where((item) => item.type == 'Proxy')
         .map((item) => ProviderItem(provider: item));
@@ -50,11 +49,11 @@ class _ProvidersViewState extends ConsumerState<ProvidersView> {
         .where((item) => item.type == 'Rule')
         .map((item) => ProviderItem(provider: item));
     final proxySection = generateSection(
-      title: appLocalizations.proxyProviders,
+      title: context.appLocalizations.proxyProviders,
       items: proxyProviders,
     );
     final ruleSection = generateSection(
-      title: appLocalizations.ruleProviders,
+      title: context.appLocalizations.ruleProviders,
       items: ruleProviders,
     );
     return AdaptiveSheetScaffold(
@@ -68,7 +67,7 @@ class _ProvidersViewState extends ConsumerState<ProvidersView> {
       ],
       type: widget.type,
       body: generateListView([...proxySection, ...ruleSection]),
-      title: appLocalizations.providers,
+      title: context.appLocalizations.providers,
     );
   }
 }
@@ -80,15 +79,15 @@ class ProviderItem extends StatelessWidget {
 
   Future<void> _handleUpdateProvider() async {
     if (provider.vehicleType != 'HTTP') return;
-    await appController.safeRun(() async {
-      final message = await appController.updateProvider(provider);
+    await globalState.safeRun(() async {
+      final message = await globalState.container.read(proxiesActionProvider.notifier).updateProvider(provider);
       if (message.isNotEmpty) throw message;
     }, silence: false);
-    appController.updateGroupsDebounce();
+    globalState.container.read(proxiesActionProvider.notifier).updateGroupsDebounce();
   }
 
   Future<void> _handleSideLoadProvider() async {
-    await appController.safeRun<void>(() async {
+    await globalState.safeRun<void>(() async {
       final platformFile = await picker.pickerFile();
       final bytes = platformFile?.bytes;
       if (bytes == null || provider.path == null) return;
@@ -99,20 +98,20 @@ class ProviderItem extends StatelessWidget {
         data: utf8.decode(bytes),
       );
       if (message.isNotEmpty) throw message;
-      appController.setProvider(
+      globalState.container.read(providersProvider.notifier).setProvider(
         await coreController.getExternalProvider(provider.name),
       );
       if (message.isNotEmpty) throw message;
     });
-    appController.updateGroupsDebounce();
+    globalState.container.read(proxiesActionProvider.notifier).updateGroupsDebounce();
   }
 
-  String _buildProviderDesc() {
-    final baseInfo = provider.updateAt.lastUpdateTimeDesc;
+  String _buildProviderDesc(BuildContext context) {
+    final baseInfo = provider.updateAt.getLastUpdateTimeDesc(context);
     final count = provider.count;
     return switch (count == 0) {
       true => baseInfo,
-      false => '$baseInfo  ·  $count${appLocalizations.entries}',
+      false => '\$baseInfo  璺? \$count\${currentAppLocalizations.entries}',
     };
   }
 
@@ -126,7 +125,7 @@ class ProviderItem extends StatelessWidget {
         children: [
           const SizedBox(height: 4),
           if (provider.updateAt.microsecondsSinceEpoch > 0)
-            Text(_buildProviderDesc()),
+            Text(_buildProviderDesc(context)),
           const SizedBox(height: 4),
           if (provider.subscriptionInfo != null)
             SubscriptionInfoView(subscriptionInfo: provider.subscriptionInfo),
@@ -138,7 +137,7 @@ class ProviderItem extends StatelessWidget {
             children: [
               CommonChip(
                 avatar: const Icon(Icons.upload),
-                label: appLocalizations.upload,
+                label: currentAppLocalizations.upload,
                 onPressed: _handleSideLoadProvider,
               ),
               if (provider.vehicleType == 'HTTP')
@@ -158,7 +157,7 @@ class ProviderItem extends StatelessWidget {
                           )
                         : CommonChip(
                             avatar: const Icon(Icons.sync),
-                            label: appLocalizations.sync,
+                            label: currentAppLocalizations.sync,
                             onPressed: _handleUpdateProvider,
                           );
                   },
@@ -171,3 +170,5 @@ class ProviderItem extends StatelessWidget {
     );
   }
 }
+
+

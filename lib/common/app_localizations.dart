@@ -1,3 +1,4 @@
-import 'package:fl_clash/l10n/l10n.dart';
+﻿import 'package:fl_clash/l10n/l10n.dart';
 
-final appLocalizations = AppLocalizations.current;
+final AppLocalizations currentAppLocalizations = AppLocalizations.current;
+final AppLocalizations appLocalizations = currentAppLocalizations;

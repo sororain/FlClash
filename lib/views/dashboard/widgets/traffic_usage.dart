@@ -1,4 +1,4 @@
-import 'dart:math';
+﻿import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -54,7 +54,7 @@ class TrafficUsage extends StatelessWidget {
       height: getWidgetHeight(2),
       child: CommonCard(
         info: Info(
-          label: appLocalizations.trafficUsage,
+          label: context.appLocalizations.trafficUsage,
           iconData: Icons.data_saver_off,
         ),
         onPressed: () {},
@@ -98,13 +98,13 @@ class TrafficUsage extends StatelessWidget {
                               builder: (_, container) {
                                 final uploadText = Text(
                                   maxLines: 1,
-                                  appLocalizations.upload,
+                                  context.appLocalizations.upload,
                                   overflow: TextOverflow.ellipsis,
                                   style: context.textTheme.bodySmall,
                                 );
                                 final downloadText = Text(
                                   maxLines: 1,
-                                  appLocalizations.download,
+                                  context.appLocalizations.download,
                                   overflow: TextOverflow.ellipsis,
                                   style: context.textTheme.bodySmall,
                                 );
@@ -139,7 +139,7 @@ class TrafficUsage extends StatelessWidget {
                                         SizedBox(width: 4),
                                         Text(
                                           maxLines: 1,
-                                          appLocalizations.upload,
+                                          context.appLocalizations.upload,
                                           overflow: TextOverflow.ellipsis,
                                           style: context.textTheme.bodySmall,
                                         ),
@@ -163,7 +163,7 @@ class TrafficUsage extends StatelessWidget {
                                         SizedBox(width: 4),
                                         Text(
                                           maxLines: 1,
-                                          appLocalizations.download,
+                                          context.appLocalizations.download,
                                           overflow: TextOverflow.ellipsis,
                                           style: context.textTheme.bodySmall,
                                         ),
@@ -198,3 +198,5 @@ class TrafficUsage extends StatelessWidget {
     );
   }
 }
+
+

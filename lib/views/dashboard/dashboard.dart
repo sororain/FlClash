@@ -1,11 +1,13 @@
-import 'dart:math';
+﻿import 'dart:math';
 
 import 'package:defer_pointer/defer_pointer.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/iqoo/services/notice_service.dart';
+import 'package:fl_clash/iqoo/pages/notices.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,6 +27,35 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   final key = GlobalKey<SuperGridState>();
   final _isEditNotifier = ValueNotifier<bool>(false);
   final _addedWidgetsNotifier = ValueNotifier<List<GridItem>>([]);
+  static bool _noticesChecked = false;
+  static final Set<String> _shownNoticeTitles = {};
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkPopupNotice();
+    });
+  }
+
+  Future<void> _checkPopupNotice() async {
+    if (_noticesChecked) return;
+    _noticesChecked = true;
+    final notices = await fetchNotices();
+    if (!mounted) return;
+    for (final notice in notices) {
+      if (notice.tags.any((t) => t.contains('弹窗')) &&
+          !_shownNoticeTitles.contains(notice.title)) {
+        _shownNoticeTitles.add(notice.title);
+        _showNoticeDetail(notice);
+        break;
+      }
+    }
+  }
+
+  void _showNoticeDetail(NoticeItem notice) {
+    showNoticeDetailDialog(context, notice);
+  }
 
   @override
   dispose() {
@@ -48,13 +79,13 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
       return;
     }
     final tip = coreStatus == CoreStatus.connected
-        ? appLocalizations.forceRestartCoreTip
-        : appLocalizations.restartCoreTip;
+        ? context.appLocalizations.forceRestartCoreTip
+        : context.appLocalizations.restartCoreTip;
     final res = await globalState.showMessage(message: TextSpan(text: tip));
     if (res != true) {
       return;
     }
-    appController.restartCore();
+    ref.read(coreActionProvider.notifier).restartCore();
   }
 
   List<Widget> _buildActions(bool isEdit) {
@@ -64,7 +95,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
           builder: (_, ref, _) {
             final coreStatus = ref.watch(coreStatusProvider);
             return Tooltip(
-              message: appLocalizations.coreStatus,
+              message: context.appLocalizations.coreStatus,
               child: FadeScaleBox(
                 alignment: Alignment.centerRight,
                 child: coreStatus == CoreStatus.connected
@@ -73,7 +104,9 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                         iconSize: 20,
                         padding: EdgeInsets.zero,
                         style: IconButton.styleFrom(
-                          backgroundColor: Colors.greenAccent,
+                          backgroundColor: Colors.green.harmonizeWith(
+                            context.colorScheme.primary,
+                          ),
                           foregroundColor: switch (Theme.brightnessOf(
                             context,
                           )) {
@@ -134,10 +167,10 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                           },
                         ),
                         label: Text(switch (coreStatus) {
-                          CoreStatus.connecting => appLocalizations.connecting,
-                          CoreStatus.connected => appLocalizations.connected,
+                          CoreStatus.connecting => currentAppLocalizations.connecting,
+                          CoreStatus.connected => currentAppLocalizations.connected,
                           CoreStatus.disconnected =>
-                            appLocalizations.disconnected,
+                            currentAppLocalizations.disconnected,
                         }),
                       ),
               ),
@@ -163,15 +196,24 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
       FadeRotationScaleBox(
         child: isEdit
             ? IconButton(
-                key: ValueKey(true),
-                icon: Icon(Icons.save, key: ValueKey('save-icon')),
+                key: const ValueKey(true),
+                icon: const Icon(Icons.save, key: ValueKey('save-icon')),
                 onPressed: _handleUpdateIsEdit,
               )
             : IconButton(
-                key: ValueKey(false),
-                icon: Icon(Icons.edit, key: ValueKey('edit-icon')),
+                key: const ValueKey(false),
+                icon: const Icon(Icons.edit, key: ValueKey('edit-icon')),
                 onPressed: _handleUpdateIsEdit,
               ),
+      ),
+      IconButton(
+        icon: const Icon(Icons.notifications_outlined),
+        tooltip: '公告中心',
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const NoticesPage()),
+          );
+        },
       ),
     ];
   }
@@ -190,7 +232,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                   key.currentState?.handleAdd(gridItem);
                 },
               ),
-              title: appLocalizations.add,
+              title: currentAppLocalizations.add,
             );
           },
         );
@@ -248,7 +290,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     });
     return _buildIsEdit(
       (isEdit) => CommonScaffold(
-        title: appLocalizations.dashboard,
+        title: currentAppLocalizations.dashboard,
         actions: _buildActions(isEdit),
         floatingActionButton: const StartButton(),
         body: Align(
@@ -387,3 +429,5 @@ class _AddedContainerState extends State<_AddedContainer> {
     );
   }
 }
+
+

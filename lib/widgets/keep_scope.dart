@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class KeepScope extends StatefulWidget {
   final Widget child;
@@ -25,3 +25,5 @@ class _KeepContainerState extends State<KeepScope>
   @override
   bool get wantKeepAlive => widget.keep;
 }
+
+

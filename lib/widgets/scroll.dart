@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -113,3 +113,5 @@ class _ScrollToEndBoxState<T> extends State<ScrollToEndBox<T>> {
     );
   }
 }
+
+

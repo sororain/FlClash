@@ -1,4 +1,5 @@
-import 'package:fl_clash/common/app_localizations.dart';
+﻿import 'package:fl_clash/common/context.dart';
+import 'package:flutter/material.dart';
 
 extension DateTimeExtension on DateTime {
   bool get isBeforeNow {
@@ -12,7 +13,8 @@ extension DateTimeExtension on DateTime {
     return true;
   }
 
-  String get lastUpdateTimeDesc {
+  String getLastUpdateTimeDesc(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
     final currentDateTime = DateTime.now();
     final difference = currentDateTime.difference(this);
     final days = difference.inDays;
@@ -50,3 +52,4 @@ extension DateTimeExtension on DateTime {
     return toString().substring(10, 19);
   }
 }
+

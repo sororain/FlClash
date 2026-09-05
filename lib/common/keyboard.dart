@@ -1,4 +1,4 @@
-import 'package:flutter/services.dart';
+﻿import 'package:flutter/services.dart';
 import 'package:uni_platform/uni_platform.dart';
 
 import 'system.dart';
@@ -101,3 +101,4 @@ extension KeyboardKeyExt on KeyboardKey {
     return _knownKeyLabels[physicalKey] ?? physicalKey?.debugName ?? 'Unknown';
   }
 }
+

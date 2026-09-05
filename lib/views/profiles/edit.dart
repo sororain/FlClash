@@ -1,11 +1,11 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/state.dart';
@@ -63,6 +63,7 @@ class _EditProfileViewState extends State<EditProfileView> {
 
   Future<void> _handleConfirm() async {
     if (!_formKey.currentState!.validate()) return;
+    final localizations = context.appLocalizations;
     var profile = widget.profile.copyWith(
       url: _urlController.text,
       label: _labelController.text,
@@ -76,20 +77,21 @@ class _EditProfileViewState extends State<EditProfileView> {
       if (profile.type == ProfileType.url && _autoUpdate) {
         final res = await globalState.showMessage(
           title: appLocalizations.tip,
-          message: TextSpan(text: appLocalizations.profileHasUpdate),
+          message: TextSpan(text: localizations.profileHasUpdate),
         );
         if (res == true) {
           profile = profile.copyWith(autoUpdate: false);
         }
       }
-      appController.putProfile(await profile.saveFile(_fileData!));
+      if (!mounted) return;
+      globalState.container.read(profilesActionProvider.notifier).putProfile(await profile.saveFile(_fileData!));
     } else if (!hasUpdate) {
-      appController.putProfile(profile);
+      globalState.container.read(profilesActionProvider.notifier).putProfile(profile);
     } else {
-      appController.safeRun(() async {
+      globalState.safeRun(() async {
         await Future.delayed(commonDuration);
         if (hasUpdate) {
-          await appController.updateProfile(profile);
+          await globalState.container.read(profilesActionProvider.notifier).updateProfile(profile);
         }
       });
     }
@@ -106,15 +108,17 @@ class _EditProfileViewState extends State<EditProfileView> {
   }
 
   Future<void> _handleSaveEdit(BuildContext context, String data) async {
-    final message = await appController.safeRun<String>(() async {
+    final message = await globalState.safeRun<String>(() async {
       final message = await coreController.validateConfigWithData(data);
       return message;
     }, silence: false);
     if (message?.isNotEmpty == true) {
-      globalState.showMessage(
-        title: appLocalizations.tip,
-        message: TextSpan(text: message),
-      );
+      if (context.mounted) {
+        globalState.showMessage(
+          title: context.appLocalizations.tip,
+          message: TextSpan(text: message),
+        );
+      }
       return;
     }
     if (context.mounted) {
@@ -148,7 +152,7 @@ class _EditProfileViewState extends State<EditProfileView> {
         }
         final res = await globalState.showMessage(
           title: title,
-          message: TextSpan(text: appLocalizations.hasCacheChange),
+          message: TextSpan(text: context.appLocalizations.hasCacheChange),
         );
         if (res == true && context.mounted) {
           _handleSaveEdit(context, content);
@@ -171,7 +175,7 @@ class _EditProfileViewState extends State<EditProfileView> {
   }
 
   Future<void> _uploadProfileFile() async {
-    final platformFile = await appController.safeRun(picker.pickerFile);
+    final platformFile = await globalState.safeRun(picker.pickerFile);
     if (platformFile?.bytes == null) return;
     _fileData = platformFile?.bytes;
     if (!mounted) {
@@ -185,8 +189,8 @@ class _EditProfileViewState extends State<EditProfileView> {
 
   Future<void> _handleBack() async {
     final res = await globalState.showMessage(
-      title: appLocalizations.tip,
-      message: TextSpan(text: appLocalizations.fileIsUpdate),
+      title: context.appLocalizations.tip,
+      message: TextSpan(text: context.appLocalizations.fileIsUpdate),
     );
     if (res == true) {
       _handleConfirm();
@@ -204,7 +208,7 @@ class _EditProfileViewState extends State<EditProfileView> {
     _fileInfoNotifier.dispose();
     _autoUpdateDurationController.dispose();
     super.dispose();
-    appController.autoApplyProfile();
+    globalState.container.read(setupActionProvider.notifier).autoApplyProfile();
   }
 
   @override
@@ -294,7 +298,7 @@ class _EditProfileViewState extends State<EditProfileView> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 4),
-                        Text(fileInfo.desc),
+                        Text(fileInfo.getDesc(context)),
                         const SizedBox(height: 8),
                         Wrap(
                           runSpacing: 6,
@@ -356,3 +360,5 @@ class _EditProfileViewState extends State<EditProfileView> {
     );
   }
 }
+
+

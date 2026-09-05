@@ -1,8 +1,9 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 import 'dart:isolate';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -32,9 +33,22 @@ class Service {
       switch (call.method) {
         case 'event':
           final data = call.arguments as String? ?? '';
-          final result = ActionResult.fromJson(json.decode(data));
-          for (final listener in _listeners) {
-            listener.onServiceEvent(CoreEvent.fromJson(result.data));
+          final dataJson = json.decode(data);
+          if (dataJson is Map &&
+              dataJson['method'] == ActionMethod.message.name) {
+            // 0.8.96 core batches events into one message call
+            final arguments = dataJson['arguments'];
+            if (arguments is List) {
+              for (final message in arguments) {
+                for (final listener in _listeners) {
+                  listener.onServiceEvent(
+                    CoreEvent.fromJson(
+                      Map<String, dynamic>.from(message as Map),
+                    ),
+                  );
+                }
+              }
+            }
           }
           break;
         case 'crash':
@@ -52,13 +66,15 @@ class Service {
   Future<ActionResult?> invokeAction(Action action) async {
     final data = await methodChannel.invokeMethod<String>(
       'invokeAction',
-      json.encode(action),
+      json.encode(coreMethodCallToJson(action.id, action.method, action.data)),
     );
     if (data == null) {
       return null;
     }
     final dataJson = await data.commonToJSON<dynamic>();
-    return ActionResult.fromJson(dataJson);
+    return actionResultFromWireJson(
+      Map<String, dynamic>.from(dataJson as Map),
+    );
   }
 
   Future<bool> start() async {
@@ -107,3 +123,4 @@ class Service {
 }
 
 Service? get service => system.isAndroid ? Service() : null;
+

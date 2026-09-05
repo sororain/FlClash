@@ -8,23 +8,80 @@ env:
   IS_STABLE: ${{ !contains(github.ref, '-') }}
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
-          - platform: macos
-            os: macos-13
-            arch: amd64
-          - platform: macos
-            os: macos-latest
-            arch: arm64
-
+  test:
+    name: Test
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.41.9
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos
+
+      - name: Run tests
+        run: flutter test --reporter expanded
+
+  build:
+    needs: [ test ]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - platform: android
+            os: ubuntu-latest
+          - platform: windows
+            os: Windows-2022
+            arch: amd64
+          - platform: linux
+            os: ubuntu-22.04
+            arch: amd64
+          - platform: macos
+            os: macos-15-intel
+            arch: amd64
+          - platform: macos
+            os: macos-latest
+            arch: arm64
+          - platform: windows
+            os: windows-11-arm
+            arch: arm64
+          - platform: linux
+            os: ubuntu-24.04-arm
+            arch: arm64
+
+    steps:
+      - name: Setup rust
+        if: startsWith(matrix.os, 'windows-11-arm')
+        run: |
+          Invoke-WebRequest -Uri "https://win.rustup.rs/aarch64" -OutFile rustup-init.exe
+          .\rustup-init.exe -y --default-toolchain stable
+          $cargoPath = "$env:USERPROFILE\.cargo\bin"
+          Add-Content $env:GITHUB_PATH $cargoPath
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Android Signing
+        if: startsWith(matrix.platform,'android')
+        run: |
+          echo "${{ secrets.KEYSTORE }}" | base64 --decode > android/app/keystore.jks
+          echo "${{ secrets.SERVICE_JSON }}" | base64 --decode > android/app/google-services.json
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/local.properties
+          echo "storePassword=${{ secrets.STORE_PASSWORD }}" >> android/local.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/local.properties
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -33,12 +90,32 @@ jobs:
           cache-dependency-path: |
             core/go.sum
 
+      - name: Enable git long paths (Windows)
+        if: startsWith(matrix.os, 'windows')
+        run: git config --global core.longpaths true
+
       - name: Setup Flutter
+        if: ${{ !(startsWith(matrix.os, 'windows-11-arm') || startsWith(matrix.os, 'ubuntu-24.04-arm')) }}
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: 3.35.7
+          flutter-version: 3.41.9
           cache: true
+      - name: Setup Flutter With Other
+        if: startsWith(matrix.os, 'windows-11-arm') || startsWith(matrix.os, 'ubuntu-24.04-arm')
+        uses: subosito/flutter-action@v2
+        with:
+          channel: master
+          flutter-version: 3.44.0-0.1.pre
+          cache: true
+
+      - name: Setup NDK
+        if: startsWith(matrix.platform,'android')
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r28c
+          add-to-path: true
+          link-to-sdk: true
 
       - name: Get Flutter Dependency
         run: |
@@ -46,7 +123,7 @@ jobs:
           flutter pub get
 
       - name: Setup
-        run: dart setup.dart ${{ matrix.platform }} ${{ matrix.arch && format('--arch {0}', matrix.arch) }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }}
+        run: dart setup.dart ${{ matrix.platform }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }} -v
 
       - name: Upload
         uses: actions/upload-artifact@v4
@@ -171,12 +248,10 @@ jobs:
           sed "s|VERSION|$version|g" ./.github/release_template.md >> release.md
 
       - name: Generate sha256
-        if: env.IS_STABLE == 'true'
+        if: ${{ env.IS_STABLE == 'true' }}
         run: |
           cd ./dist
-          for file in $(find . -type f -not -name "*.sha256"); do
-            sha256sum "$file" > "${file}.sha256"
-          done  
+          sha256sum * > SHA256SUMS
 
       - name: Release
         if: ${{ env.IS_STABLE == 'true' }}
@@ -185,3 +260,24 @@ jobs:
           files: ./dist/*
           body_path: './release.md'
 
+      - name: Create Fdroid Source Dir
+        if: ${{ env.IS_STABLE == 'true' }}
+        run: |
+          mkdir -p ./tmp
+          cp ./dist/*android-arm64-v8a* ./tmp/ || true
+          echo "Files copied successfully"
+
+      - name: Push to fdroid repo
+        if: ${{ env.IS_STABLE == 'true' }}
+        uses: cpina/github-action-push-to-another-repository@v1.7.2
+        env:
+          SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
+        with:
+          source-directory: ./tmp/
+          destination-github-username: chen08209
+          destination-repository-name: FlClash-fdroid-repo
+          user-name: 'github-actions[bot]'
+          user-email: 'github-actions[bot]@users.noreply.github.com'
+          target-branch: main
+          commit-message: Update from ${{ github.ref_name }}
+          target-directory: /tmp/

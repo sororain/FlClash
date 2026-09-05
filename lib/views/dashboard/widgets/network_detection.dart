@@ -1,4 +1,4 @@
-import 'package:fl_clash/common/common.dart';
+﻿import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
@@ -60,7 +60,7 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
                     flex: 1,
                     child: TooltipText(
                       text: Text(
-                        appLocalizations.networkDetection,
+                        context.appLocalizations.networkDetection,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: descTextStyle,
@@ -74,9 +74,9 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
                       padding: EdgeInsets.zero,
                       onPressed: () {
                         globalState.showMessage(
-                          title: appLocalizations.tip,
+                          title: context.appLocalizations.tip,
                           message: TextSpan(
-                            text: appLocalizations.detectionTip,
+                            text: context.appLocalizations.detectionTip,
                           ),
                           cancelable: false,
                         );
@@ -131,3 +131,5 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
     );
   }
 }
+
+

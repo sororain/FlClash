@@ -1,4 +1,4 @@
-import 'dart:math' as math;
+﻿import 'dart:math' as math;
 import 'dart:math';
 
 import 'package:collection/collection.dart';
@@ -1126,3 +1126,5 @@ class _RenderSegmentedControl<T extends Object> extends RenderBox
     return false;
   }
 }
+
+

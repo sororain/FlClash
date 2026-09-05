@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 class Store<T> {
   late T _data;
@@ -31,3 +31,4 @@ class Store<T> {
     _add(value);
   }
 }
+

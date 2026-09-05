@@ -69,5 +69,5 @@ devtools_options.yaml
 .fvm/
 .fvmrc
 app_config.json
-lib/common/app_config.dart
-lib/common/feature_flags.dart
+lib/iqoo/
+setup.dart

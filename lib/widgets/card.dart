@@ -1,4 +1,4 @@
-import 'package:fl_clash/common/common.dart';
+﻿import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
@@ -89,6 +89,7 @@ class CommonCard extends StatelessWidget {
     this.onPressed,
     this.selectWidget,
     this.radius,
+    this.borderRadius,
     required this.child,
     this.padding,
     this.enterAnimated = false,
@@ -106,6 +107,7 @@ class CommonCard extends StatelessWidget {
   final Info? info;
   final CommonCardType type;
   final double? radius;
+  final BorderRadius? borderRadius;
 
   // final WidgetStateProperty<Color?>? backgroundColor;
   // final WidgetStateProperty<BorderSide?>? borderSide;
@@ -189,7 +191,7 @@ class CommonCard extends StatelessWidget {
         padding: const WidgetStatePropertyAll(EdgeInsets.zero),
         shape: WidgetStatePropertyAll(
           RoundedSuperellipseBorder(
-            borderRadius: BorderRadius.circular(radius ?? 14),
+            borderRadius: borderRadius ?? BorderRadius.circular(radius ?? 14),
           ),
         ),
         iconColor: WidgetStatePropertyAll(context.colorScheme.primary),
@@ -253,3 +255,5 @@ class SettingsBlock extends StatelessWidget {
     );
   }
 }
+
+

@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:fl_clash/common/common.dart';
@@ -183,3 +183,4 @@ const mimeTypes = {
   'video/x-msvideo': '.avi',
   'video/quicktime': '.mov',
 };
+

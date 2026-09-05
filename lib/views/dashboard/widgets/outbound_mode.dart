@@ -1,9 +1,8 @@
-import 'dart:math';
+﻿import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -32,7 +31,7 @@ class OutboundMode extends StatelessWidget {
             child: CommonCard(
               onPressed: () {},
               info: Info(
-                label: appLocalizations.outboundMode,
+                label: context.appLocalizations.outboundMode,
                 iconData: Icons.call_split_sharp,
               ),
               child: Padding(
@@ -43,7 +42,7 @@ class OutboundMode extends StatelessWidget {
                     if (value == null) {
                       return;
                     }
-                    appController.changeMode(value);
+                    globalState.container.read(setupActionProvider.notifier).changeMode(value);
                   },
                   child: LayoutBuilder(
                     builder: (_, constraints) {
@@ -68,7 +67,7 @@ class OutboundMode extends StatelessWidget {
                               ),
                               delegate: RadioDelegate(
                                 onTab: () {
-                                  appController.changeMode(item);
+                                  globalState.container.read(setupActionProvider.notifier).changeMode(item);
                                 },
                                 value: item,
                               ),
@@ -163,7 +162,7 @@ class OutboundModeV2 extends StatelessWidget {
                             if (value == null) {
                               return;
                             }
-                            appController.changeMode(value);
+                            globalState.container.read(setupActionProvider.notifier).changeMode(value);
                           },
                           thumbColor: thumbColor,
                         ),
@@ -197,3 +196,5 @@ class OutboundModeV2 extends StatelessWidget {
     );
   }
 }
+
+

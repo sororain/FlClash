@@ -15,8 +15,8 @@ SolidCompression=yes
 SetupIconFile={{SETUP_ICON_FILE}}
 WizardStyle=modern
 PrivilegesRequired={{PRIVILEGES_REQUIRED}}
-ArchitecturesAllowed=x64 arm64
-ArchitecturesInstallIn64BitMode=x64 arm64
+ArchitecturesAllowed={{ARCH}}
+ArchitecturesInstallIn64BitMode={{ARCH}}
 
 [Code]
 procedure KillProcesses;
@@ -25,7 +25,7 @@ var
   i: Integer;
   ResultCode: Integer;
 begin
-  Processes := ['Sororain.exe', 'SororainCore.exe', 'SororainHelper.exe'];
+  Processes := ['Sororain.exe', 'SororainCore.exe', 'SororainHelperService.exe'];
 
   for i := 0 to GetArrayLength(Processes)-1 do
   begin

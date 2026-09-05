@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 
 import 'package:fl_clash/models/models.dart';
@@ -92,3 +92,4 @@ class Preferences {
 }
 
 final preferences = Preferences();
+

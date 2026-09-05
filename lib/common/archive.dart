@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:archive/archive_io.dart';
 import 'package:path/path.dart';
@@ -25,3 +25,4 @@ extension ArchiveExt on Archive {
   //   addFile(ArchiveFile.string(name, data));
   // }
 }
+

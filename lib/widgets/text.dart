@@ -1,4 +1,4 @@
-import 'package:emoji_regex/emoji_regex.dart';
+﻿import 'package:emoji_regex/emoji_regex.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/material.dart';
 
@@ -110,3 +110,5 @@ class EmojiText extends StatelessWidget {
 //     );
 //   }
 // }
+
+

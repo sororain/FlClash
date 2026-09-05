@@ -1,8 +1,8 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/state.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -44,7 +44,7 @@ class _WindowContainerState extends ConsumerState<WindowManager>
 
   @override
   void onWindowClose() async {
-    await appController.handleBackOrExit();
+    await globalState.container.read(systemActionProvider.notifier).handleBackOrExit();
     super.onWindowClose();
   }
 
@@ -57,7 +57,7 @@ class _WindowContainerState extends ConsumerState<WindowManager>
 
   @override
   Future<void> onShouldTerminate() async {
-    await appController.handleExit();
+    await globalState.container.read(systemActionProvider.notifier).handleExit();
     super.onShouldTerminate();
   }
 
@@ -65,7 +65,7 @@ class _WindowContainerState extends ConsumerState<WindowManager>
   void onWindowMoved() {
     super.onWindowMoved();
     windowManager.getPosition().then((offset) {
-      ref.read(windowSettingProvider.notifier);
+      globalState.container.read(windowSettingProvider.notifier);
       // .update((state) => state.copyWith(top: offset.dy, left: offset.dx));
     });
   }
@@ -83,7 +83,7 @@ class _WindowContainerState extends ConsumerState<WindowManager>
 
   @override
   void onWindowMinimize() async {
-    appController.savePreferencesDebounce();
+    globalState.container.read(storeActionProvider.notifier).savePreferencesDebounce();
     commonPrint.log('minimize');
     render?.pause();
     super.onWindowMinimize();
@@ -113,8 +113,8 @@ class WindowHeaderContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer(
       builder: (_, ref, child) {
-        final isMobileView = ref.watch(isMobileViewProvider);
-        final version = ref.watch(versionProvider);
+        final isMobileView = globalState.container.read(isMobileViewProvider);
+        final version = globalState.container.read(versionProvider);
         if ((version <= 10 || !isMobileView) && system.isMacOS) {
           return child!;
         }
@@ -220,7 +220,7 @@ class _WindowHeaderState extends State<WindowHeader> {
         ),
         IconButton(
           onPressed: () {
-            appController.handleBackOrExit();
+            globalState.container.read(systemActionProvider.notifier).handleBackOrExit();
           },
           icon: const Icon(Icons.close),
         ),
@@ -283,3 +283,4 @@ class AppIcon extends StatelessWidget {
     );
   }
 }
+

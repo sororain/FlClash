@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:flutter/material.dart';
@@ -107,3 +107,37 @@ class _ImageCacheWidgetState extends State<ImageCacheWidget> {
     );
   }
 }
+
+class CommonImage extends StatelessWidget {
+  final File data;
+  final bool isSvg;
+  final Widget Function(
+    BuildContext context,
+    Object error,
+    StackTrace? stackTrace,
+  )?
+  errorBuilder;
+
+  const CommonImage({
+    super.key,
+    required this.data,
+    this.errorBuilder,
+    this.isSvg = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (isSvg) {
+      return SvgPicture.file(
+        data,
+        errorBuilder: (_, _, _) => const SizedBox.shrink(),
+      );
+    }
+    return Image.file(
+      data,
+      errorBuilder: (_, _, _) => const SizedBox.shrink(),
+    );
+  }
+}
+
+

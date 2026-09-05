@@ -1,4 +1,4 @@
-import 'package:fl_clash/common/common.dart';
+﻿import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/app.dart';
@@ -30,12 +30,12 @@ class TrackerInfoItem extends ConsumerWidget {
     return await app?.getPackageIcon(connection.metadata.process);
   }
 
-  String _getSourceText(TrackerInfo trackerInfo) {
+  String _getSourceText(TrackerInfo trackerInfo, BuildContext context) {
     final progress = trackerInfo.progressText.isNotEmpty
         ? '${trackerInfo.progressText} · '
         : '';
     final traffic = Traffic(up: trackerInfo.upload, down: trackerInfo.download);
-    return '${trackerInfo.start.lastUpdateTimeDesc} · $progress${traffic.desc}';
+    return '${trackerInfo.start.getLastUpdateTimeDesc(context)} · $progress${traffic.desc}';
   }
 
   @override
@@ -68,7 +68,7 @@ class TrackerInfoItem extends ConsumerWidget {
         // ),
         const SizedBox(height: 6),
         Text(
-          _getSourceText(trackerInfo),
+          _getSourceText(trackerInfo, context),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: context.textTheme.bodyMedium?.copyWith(
@@ -105,7 +105,7 @@ class TrackerInfoItem extends ConsumerWidget {
               },
             ),
           ),
-          if (trailing != null) trailing!,
+          ?trailing,
         ],
       ),
     );
@@ -221,7 +221,7 @@ class TrackerInfoDetailView extends StatelessWidget {
     return destinationIP;
   }
 
-  Widget _buildChains() {
+  Widget _buildChains(BuildContext context) {
     final chains = Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -279,6 +279,7 @@ class TrackerInfoDetailView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
     final items = [
       _buildItem(
         title: appLocalizations.creationTime,
@@ -341,7 +342,7 @@ class TrackerInfoDetailView extends StatelessWidget {
           title: appLocalizations.remoteDestination,
           desc: trackerInfo.metadata.remoteDestination,
         ),
-      _buildChains(),
+      _buildChains(context),
     ];
     return SelectionArea(
       child: ListView.builder(
@@ -354,3 +355,5 @@ class TrackerInfoDetailView extends StatelessWidget {
     );
   }
 }
+
+

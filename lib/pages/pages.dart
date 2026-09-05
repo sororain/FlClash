@@ -1,5 +1,6 @@
-export 'editor.dart';
+﻿export 'editor.dart';
 export 'error.dart';
 export 'home.dart';
-export 'login.dart';
+export 'package:fl_clash/iqoo/pages/login.dart';
 export 'scan.dart';
+
