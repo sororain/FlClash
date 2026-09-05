@@ -411,4 +411,3 @@ class _AddOrEditRuleDialogState extends State<AddOrEditRuleDialog> {
     );
   }
 }
-
