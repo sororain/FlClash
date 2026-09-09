@@ -1,0 +1,103 @@
+import 'package:sororain/enum/enum.dart';
+import 'package:sororain/models/models.dart';
+import 'package:sororain/views/views.dart';
+import 'package:flutter/material.dart';
+
+class Navigation {
+  static Navigation? _instance;
+
+  List<NavigationItem> getItems({
+    bool openLogs = false,
+    bool hasProxies = false,
+    bool showShop = true,
+  }) {
+    return [
+      NavigationItem(
+        keep: false,
+        icon: const Icon(Icons.space_dashboard),
+        label: PageLabel.dashboard,
+        builder: (_) =>
+            const DashboardView(key: GlobalObjectKey(PageLabel.dashboard)),
+      ),
+      NavigationItem(
+        icon: const Icon(Icons.article),
+        label: PageLabel.proxies,
+        builder: (_) =>
+            const ProxiesView(key: GlobalObjectKey(PageLabel.proxies)),
+        modes: hasProxies
+            ? [NavigationItemMode.mobile, NavigationItemMode.desktop]
+            : [],
+      ),
+      NavigationItem(
+        icon: const Icon(Icons.folder),
+        label: PageLabel.profiles,
+        builder: (_) =>
+            const ProfilesView(key: GlobalObjectKey(PageLabel.profiles)),
+      ),
+      NavigationItem(
+        icon: const Icon(Icons.view_timeline),
+        label: PageLabel.requests,
+        builder: (_) =>
+            const RequestsView(key: GlobalObjectKey(PageLabel.requests)),
+        description: 'requestsDesc',
+        modes: [NavigationItemMode.more],
+      ),
+      NavigationItem(
+        icon: const Icon(Icons.ballot),
+        label: PageLabel.connections,
+        builder: (_) =>
+            const ConnectionsView(key: GlobalObjectKey(PageLabel.connections)),
+        description: 'connectionsDesc',
+        modes: [NavigationItemMode.more],
+      ),
+      NavigationItem(
+        icon: const Icon(Icons.storage),
+        label: PageLabel.resources,
+        description: 'resourcesDesc',
+        builder: (_) =>
+            const ResourcesView(key: GlobalObjectKey(PageLabel.resources)),
+        modes: [NavigationItemMode.more],
+      ),
+      NavigationItem(
+        icon: const Icon(Icons.adb),
+        label: PageLabel.logs,
+        builder: (_) => const LogsView(key: GlobalObjectKey(PageLabel.logs)),
+        description: 'logsDesc',
+        modes: openLogs
+            ? [NavigationItemMode.more]
+            : [],
+      ),
+      // 商店/工具共用同一槽位，通过 showShop 切换
+      if (showShop)
+        NavigationItem(
+          icon: const Icon(Icons.store),
+          label: PageLabel.shop,
+          builder: (_) => const ShopView(key: GlobalObjectKey(PageLabel.shop)),
+          modes: [NavigationItemMode.mobile, NavigationItemMode.desktop],
+        )
+      else
+        NavigationItem(
+          icon: const Icon(Icons.construction),
+          label: PageLabel.tools,
+          builder: (_) => const ToolsView(key: GlobalObjectKey(PageLabel.tools)),
+          modes: [NavigationItemMode.mobile, NavigationItemMode.desktop],
+        ),
+      NavigationItem(
+        icon: const Icon(Icons.person_outline),
+        label: PageLabel.users,
+        builder: (_) => const UserView(key: GlobalObjectKey(PageLabel.profile)),
+        modes: [NavigationItemMode.mobile, NavigationItemMode.desktop],
+      ),
+    ];
+  }
+
+  Navigation._internal();
+
+  factory Navigation() {
+    _instance ??= Navigation._internal();
+    return _instance!;
+  }
+}
+
+final navigation = Navigation();
+

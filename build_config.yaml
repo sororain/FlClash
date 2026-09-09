@@ -1,0 +1,3 @@
+# 由 setup.dart _syncNames() 自动同步，也可手动修改
+core_name: SororainCore
+helper_name: SororainHelperService

@@ -1,0 +1,14 @@
+script_template: inno_setup.iss
+app_id: E8C6A6D2-02E6-4019-BEE2-36411DFC5DCB
+app_name: Sororain
+publisher: Sororain
+publisher_url: https://github.com
+display_name: Sororain
+executable_name: Sororain.exe
+output_base_file_name: Sororain.exe
+setup_icon_file: ..\windows\runner\resources\app_icon.ico
+locales:
+  - lang: zh
+    file: ..\windows\packaging\exe\ChineseSimplified.isl
+  - lang: en
+privileges_required: admin

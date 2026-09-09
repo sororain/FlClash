@@ -1,0 +1,18 @@
+display_name: Sororain
+
+icon: ./assets/images/icon.png
+
+keywords:
+  - Sororain
+  - Clash
+  - ClashMeta
+  - Proxy
+
+generic_name: Sororain
+
+categories:
+  - Network
+
+startup_notify: true
+
+include: []

@@ -1,0 +1,98 @@
+import 'package:sororain/common/common.dart';
+import 'package:sororain/enum/enum.dart';
+import 'package:sororain/providers/providers.dart';
+import 'package:sororain/models/common.dart';
+import 'package:sororain/state.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hotkey_manager/hotkey_manager.dart';
+
+class HotKeyManager extends ConsumerStatefulWidget {
+  final Widget child;
+
+  const HotKeyManager({super.key, required this.child});
+
+  @override
+  ConsumerState<HotKeyManager> createState() => _HotKeyManagerState();
+}
+
+class _HotKeyManagerState extends ConsumerState<HotKeyManager> {
+  @override
+  void initState() {
+    super.initState();
+    ref.listenManual(hotKeyActionsProvider, (prev, next) {
+      if (!hotKeyActionListEquality.equals(prev, next)) {
+        _updateHotKeys(hotKeyActions: next);
+      }
+    }, fireImmediately: true);
+  }
+
+  Future<void> _handleHotKeyAction(HotAction action) async {
+    switch (action) {
+      case HotAction.mode:
+        final currentMode = globalState.container.read(patchClashConfigProvider).mode;
+        globalState.container.read(setupActionProvider.notifier).changeMode(currentMode);
+      case HotAction.start:
+        globalState.container.read(setupActionProvider.notifier).updateStatus(!globalState.container.read(isStartProvider));
+      case HotAction.view:
+        globalState.container.read(systemActionProvider.notifier).updateVisible();
+      case HotAction.proxy:
+        globalState.container.read(networkSettingProvider.notifier).update((s) => s.copyWith(systemProxy: !s.systemProxy));
+      case HotAction.tun:
+        globalState.container.read(patchClashConfigProvider.notifier).update((s) => s.copyWith.tun(enable: !s.tun.enable));
+    }
+  }
+
+  Future<void> _updateHotKeys({
+    required List<HotKeyAction> hotKeyActions,
+  }) async {
+    await hotKeyManager.unregisterAll();
+    final hotkeyActionHandles = hotKeyActions
+        .where((hotKeyAction) {
+          return hotKeyAction.key != null && hotKeyAction.modifiers.isNotEmpty;
+        })
+        .map<Future>((hotKeyAction) async {
+          final modifiers = hotKeyAction.modifiers
+              .map((item) => item.toHotKeyModifier())
+              .toList();
+          final hotKey = HotKey(
+            key: PhysicalKeyboardKey(hotKeyAction.key!),
+            modifiers: modifiers,
+          );
+          return await hotKeyManager.register(
+            hotKey,
+            keyDownHandler: (_) {
+              _handleHotKeyAction(hotKeyAction.action);
+            },
+          );
+        });
+    await Future.wait(hotkeyActionHandles);
+  }
+
+  Shortcuts _buildShortcuts(Widget child) {
+    return Shortcuts(
+      shortcuts: {
+        utils.controlSingleActivator(LogicalKeyboardKey.keyW):
+            CloseWindowIntent(),
+      },
+      child: Actions(
+        actions: {
+          CloseWindowIntent: CallbackAction<CloseWindowIntent>(
+            onInvoke: (_) => globalState.container.read(systemActionProvider.notifier).handleBackOrExit(),
+          ),
+          DoNothingIntent: CallbackAction<DoNothingIntent>(
+            onInvoke: (_) => null,
+          ),
+        },
+        child: child,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _buildShortcuts(widget.child);
+  }
+}
+

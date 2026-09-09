@@ -1,0 +1,277 @@
+import 'package:sororain/common/common.dart';
+import 'package:sororain/enum/enum.dart';
+import 'package:sororain/providers/config.dart';
+import 'package:sororain/widgets/widgets.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+
+class ProxiesSetting extends StatelessWidget {
+  const ProxiesSetting({super.key});
+
+  IconData _getIconWithProxiesType(ProxiesType type) {
+    return switch (type) {
+      ProxiesType.tab => Icons.view_carousel,
+      ProxiesType.list => Icons.view_list,
+    };
+  }
+
+  IconData _getIconWithProxiesSortType(ProxiesSortType type) {
+    return switch (type) {
+      ProxiesSortType.none => Icons.sort,
+      ProxiesSortType.delay => Icons.network_ping,
+      ProxiesSortType.name => Icons.sort_by_alpha,
+    };
+  }
+
+  String _getStringProxiesSortType(BuildContext context, ProxiesSortType type) {
+    return switch (type) {
+      ProxiesSortType.none => context.appLocalizations.defaultText,
+      ProxiesSortType.delay => context.appLocalizations.delay,
+      ProxiesSortType.name => context.appLocalizations.name,
+    };
+  }
+
+  String getTextForProxiesLayout(BuildContext context, ProxiesLayout proxiesLayout) {
+    return switch (proxiesLayout) {
+      ProxiesLayout.tight => context.appLocalizations.tight,
+      ProxiesLayout.standard => context.appLocalizations.standard,
+      ProxiesLayout.loose => context.appLocalizations.loose,
+    };
+  }
+
+  String _getTextWithProxiesIconStyle(BuildContext context, ProxiesIconStyle style) {
+    return switch (style) {
+      ProxiesIconStyle.standard => context.appLocalizations.standard,
+      ProxiesIconStyle.none => context.appLocalizations.none,
+      ProxiesIconStyle.icon => context.appLocalizations.onlyIcon,
+    };
+  }
+
+  List<Widget> _buildStyleSetting(BuildContext context) {
+    return generateSection(
+      isFirst: true,
+      title: context.appLocalizations.style,
+      items: [
+        SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          scrollDirection: Axis.horizontal,
+          child: Consumer(
+            builder: (_, ref, _) {
+              final proxiesType = ref.watch(
+                proxiesStyleSettingProvider.select((state) => state.type),
+              );
+              return Wrap(
+                spacing: 16,
+                children: [
+                  for (final item in ProxiesType.values)
+                    SettingInfoCard(
+                      Info(
+                        label: Intl.message(item.name),
+                        iconData: _getIconWithProxiesType(item),
+                      ),
+                      isSelected: proxiesType == item,
+                      onPressed: () {
+                        ref.read(proxiesStyleSettingProvider.notifier).update((
+                          state,
+                        ) {
+                          return state.copyWith(type: item);
+                        });
+                      },
+                    ),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _buildSortSetting(BuildContext context) {
+    return generateSection(
+      title: context.appLocalizations.sort,
+      items: [
+        SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          scrollDirection: Axis.horizontal,
+          child: Consumer(
+            builder: (_, ref, _) {
+              final sortType = ref.watch(
+                proxiesStyleSettingProvider.select((state) => state.sortType),
+              );
+              return Wrap(
+                spacing: 16,
+                children: [
+                  for (final item in ProxiesSortType.values)
+                    SettingInfoCard(
+                      Info(
+                        label: _getStringProxiesSortType(context, item),
+                        iconData: _getIconWithProxiesSortType(item),
+                      ),
+                      isSelected: sortType == item,
+                      onPressed: () {
+                        ref.read(proxiesStyleSettingProvider.notifier).update((
+                          state,
+                        ) {
+                          return state.copyWith(sortType: item);
+                        });
+                      },
+                    ),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _buildSizeSetting(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return generateSection(
+      title: appLocalizations.size,
+      items: [
+        SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          scrollDirection: Axis.horizontal,
+          child: Consumer(
+            builder: (_, ref, _) {
+              final cardType = ref.watch(
+                proxiesStyleSettingProvider.select((state) => state.cardType),
+              );
+              return Wrap(
+                spacing: 16,
+                children: [
+                  for (final item in ProxyCardType.values)
+                    SettingTextCard(
+                      Intl.message(item.name),
+                      isSelected: item == cardType,
+                      onPressed: () {
+                        ref.read(proxiesStyleSettingProvider.notifier).update((
+                          state,
+                        ) {
+                          return state.copyWith(cardType: item);
+                        });
+                      },
+                    ),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _buildLayoutSetting(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return generateSection(
+      title: appLocalizations.layout,
+      items: [
+        SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          scrollDirection: Axis.horizontal,
+          child: Consumer(
+            builder: (_, ref, _) {
+              final layout = ref.watch(
+                proxiesStyleSettingProvider.select((state) => state.layout),
+              );
+              return Wrap(
+                spacing: 16,
+                children: [
+                  for (final item in ProxiesLayout.values)
+                    SettingTextCard(
+                      getTextForProxiesLayout(context, item),
+                      isSelected: item == layout,
+                      onPressed: () {
+                        ref.watch(proxiesStyleSettingProvider.notifier).update((
+                          state,
+                        ) {
+                          return state.copyWith(layout: item);
+                        });
+                      },
+                    ),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _buildGroupStyleSetting(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return generateSection(
+      title: appLocalizations.iconStyle,
+      items: [
+        SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          scrollDirection: Axis.horizontal,
+          child: Consumer(
+            builder: (_, ref, _) {
+              final iconStyle = ref.watch(
+                proxiesStyleSettingProvider.select((state) => state.iconStyle),
+              );
+              return Wrap(
+                spacing: 16,
+                children: [
+                  for (final item in ProxiesIconStyle.values)
+                    SettingTextCard(
+                      _getTextWithProxiesIconStyle(context, item),
+                      isSelected: iconStyle == item,
+                      onPressed: () {
+                        ref.read(proxiesStyleSettingProvider.notifier).update((
+                          state,
+                        ) {
+                          return state.copyWith(iconStyle: item);
+                        });
+                      },
+                    ),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.only(bottom: 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ..._buildStyleSetting(context),
+          ..._buildSortSetting(context),
+          ..._buildLayoutSetting(context),
+          ..._buildSizeSetting(context),
+          Consumer(
+            builder: (_, ref, child) {
+              final isList = ref.watch(
+                proxiesStyleSettingProvider.select(
+                  (state) => state.type == ProxiesType.list,
+                ),
+              );
+              if (isList) {
+                return child!;
+              }
+              return Container();
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [..._buildGroupStyleSetting(context)],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
