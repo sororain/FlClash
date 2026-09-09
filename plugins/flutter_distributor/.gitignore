@@ -1,8 +1,0 @@
-.dart_tool/
-
-# IntelliJ related
-*.iml
-.idea/
-
-pubspec_overrides.yaml
-pubspec.lock

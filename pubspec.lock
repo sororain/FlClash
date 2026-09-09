@@ -1757,7 +1757,7 @@ packages:
       path: "plugins/tray_manager/packages/tray_manager"
       relative: true
     source: path
-    version: "0.5.2"
+    version: "0.5.3"
   typed_data:
     dependency: transitive
     description:
