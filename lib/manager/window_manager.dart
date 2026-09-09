@@ -166,13 +166,17 @@ class _WindowHeaderState extends State<WindowHeader> {
 
   Future<void> _updateMaximized() async {
     final isMaximized = await windowManager.isMaximized();
-    switch (isMaximized) {
-      case true:
-        await windowManager.unmaximize();
-        break;
-      case false:
-        await windowManager.maximize();
-        break;
+    // 最大化时切方角、还原时恢复圆角(对齐 0.8.96)
+    if (isMaximized) {
+      await windowManager.unmaximize();
+      if (system.isWindows) {
+        await windowExtManager.setWindowCornerPreference(round: true);
+      }
+    } else {
+      await windowManager.maximize();
+      if (system.isWindows) {
+        await windowExtManager.setWindowCornerPreference(round: false);
+      }
     }
     isMaximizedNotifier.value = await windowManager.isMaximized();
   }
