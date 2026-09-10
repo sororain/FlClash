@@ -4,13 +4,13 @@
 
 </div>
 
-## FlClash
+## Sororain
 
 [![Downloads](https://img.shields.io/github/downloads/chen08209/FlClash/total?style=flat-square&logo=github)](https://github.com/chen08209/FlClash/releases/)[![Last Version](https://img.shields.io/github/release/chen08209/FlClash/all.svg?style=flat-square)](https://github.com/chen08209/FlClash/releases/)[![License](https://img.shields.io/github/license/chen08209/FlClash?style=flat-square)](LICENSE)
 
-[![Channel](https://img.shields.io/badge/Telegram-Channel-blue?style=flat-square&logo=telegram)](https://t.me/FlClash)
+[![Channel](https://img.shields.io/badge/Telegram-Channel-blue?style=flat-square&logo=telegram)](https://t.me/sororain)
 
-基于ClashMeta的多平台代理客户端，简单易用，开源无广告。
+现代化的跨平台代理客户端，提供简洁流畅的使用体验。
 
 on Desktop:
 <p style="text-align: center;">
