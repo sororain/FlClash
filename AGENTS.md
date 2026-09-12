@@ -217,12 +217,27 @@ false`, because the live desktop path still consumes the compile-time `CORE_SHA2
 `flutter build`, while the hook only runs during it). Enable it only after the desktop core stack reads `manifest.json`
 at runtime.
 
-**Windows helper auth (release):** Core SHA256 is embedded in both the Flutter app (`--dart-define`) and the Rust helper
-(`TOKEN` env var during cargo build; `services/helper/build.rs` also accepts `CORE_SHA256`, the variable the Dart build
-hook passes). The Dart app pings the helper and verifies the token matches.
+**Windows helper auth (release):** Core SHA256 is embedded into the Rust helper at compile time only
+(`services/helper/build.rs` exports `cargo:rustc-env=CORE_SHA256` and `CORE_NAME`; it reads `CORE_SHA256` — what the Dart
+build hook passes — with `TOKEN` kept as a fallback for the inline `setup.dart` path). The Flutter app no longer carries
+a `--dart-define` copy: at runtime both sides read the Core's `manifest.json` next to the executable
+(`lib/core/desktop/core_manifest.dart` → `CoreManifest.readCoreSha256()`), which is why `globalState.coreSHA256` is gone.
 
-**Windows helper auth (debug):** The Rust helper skips token verification when built in debug mode
-(`cfg!(debug_assertions)`), so `flutter run` works without any SHA256 dance.
+**Helper protocol (v6):** `http://127.0.0.1:47890`, all replies carry `x-sororain-helper-protocol: 6`
+(`helperProtocolVersionHeader`/`helperProtocolVersion`). Endpoints: `GET /ping?coreSha256=<64hex>` (200 = helper exe path
+as `text/plain`; 409 `coreSha256Mismatch`; 409 without that code = Core executable not accessible), `POST /start
+{address, sessionId}` (200 `{sessionId, pid}`; 400 `invalidRequest`; 409 `coreVerificationFailed`; 500
+`processLaunchFailed` + `osError`; 500 `coreStopFailed`; 500 `internalError`), `POST /stop {sessionId}` (200
+`{sessionId, stopped:true}`; 200 `{stopped:false, reason:'notRunning'}`; 409 `reason:'sessionMismatch'`), `GET /logs`
+(text log tail). `/start` only accepts a Core address shaped `\\.\pipe\SororainCore_<32 lowercase hex>`
+(`windowsPipeName` uses `_randomPipeId()`, not a short random number) and a 32-hex `sessionId`; the app's
+`HelperClient`/`HelperLauncherResolver`/`FallbackCoreLauncher` treat exactly the two pre-spawn failures
+(`coreVerificationFailed`, `processLaunchFailed`) as "fall back to a direct launch". The helper binds the Core into a
+Windows Job Object with `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`, so a helper that dies cannot orphan a Core (and its TUN).
+
+**Windows helper auth (debug):** There is no debug bypass any more — the helper verifies the Core SHA256 in every build
+mode, because the build hook injects `CORE_SHA256` for debug builds too. A helper built by hand (`cargo build` with no
+env) carries an empty SHA and refuses to serve.
 
 `plugins/setup/` is a build-harness package with no Dart API and no platform folders; it exists only to provide the Dart
 build hook above (Go core + Rust helper compilation).

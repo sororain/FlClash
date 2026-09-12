@@ -1,12 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:sororain/common/common.dart';
 import 'package:sororain/core/core.dart';
 import 'package:sororain/enum/enum.dart';
 import 'package:sororain/models/core.dart';
 
+import 'desktop/helper_client.dart';
+import 'desktop/launcher.dart';
+import 'desktop/manager.dart';
+import 'desktop/model.dart';
 import 'interface.dart';
 import 'transport.dart';
 
@@ -20,7 +23,9 @@ class CoreService extends CoreHandlerInterface {
 
   final Map<String, Completer> _callbackCompleterMap = {};
 
-  Process? _process;
+  /// Core 进程的拉起与收尾全部交给 [DesktopCoreManager]：它内部按平台/权限
+  /// 选 helper（提权 + TUN）或直连启动，并把失败归类成可上报的状态。
+  late final DesktopCoreManager _manager;
 
   factory CoreService() {
     _instance ??= CoreService._internal();
@@ -30,6 +35,14 @@ class CoreService extends CoreHandlerInterface {
   CoreService._internal() {
     _transport = IPCCoreTransport(
       address: system.isWindows ? windowsPipeName : unixSocketPath,
+    );
+    _manager = DesktopCoreManager(
+      launcherResolver: HelperLauncherResolver(
+        hasHelper: system.hasHelperService,
+        directLauncher: DirectCoreLauncher(),
+        helperLauncher: HelperLauncher(helperClient),
+        helperReady: () => helperClient.readiness(),
+      ),
     );
     _initServer().then((_) => _initCompleter.complete());
   }
@@ -104,43 +117,29 @@ class CoreService extends CoreHandlerInterface {
   }
 
   Future<void> start() async {
-    if (_process != null) {
+    if (_manager.state is DesktopCoreRunning) {
       await shutdown(false);
     }
     // Wait for the transport server to be ready before getting the address
     await _initCompleter.future;
     // Use the actual bound address (for Windows TCP, this includes the port)
     final coreAddress = _transport.bindAddress;
-    if (system.isWindows && await system.checkIsAdmin()) {
-      final isSuccess = await request.startCoreByHelper(coreAddress);
-      if (isSuccess) {
-        await _transport.connectionCompleter.future;
-        return;
-      }
-    }
-    try {
-      _process = await Process.start(appPath.corePath, [coreAddress]);
-    } catch (e) {
+    final result = await _manager.start(address: coreAddress);
+    if (result.session == null) {
       commonPrint.log(
-        'Failed to start core process: $e',
+        'Failed to start core process: ${result.outcome.name}',
         logLevel: LogLevel.error,
       );
       _handleInvokeCrashEvent();
       return;
     }
-    _process?.stdout.listen((_) {});
-    _process?.stderr.listen((e) {
-      final error = utf8.decode(e);
-      if (error.isNotEmpty) {
-        commonPrint.log(error, logLevel: LogLevel.warning);
-      }
-    });
     await _transport.connectionCompleter.future;
   }
 
   @override
   FutureOr<bool> destroy() async {
     await shutdown(false);
+    await _manager.dispose();
     await _transport.close();
     return true;
   }
@@ -153,12 +152,9 @@ class CoreService extends CoreHandlerInterface {
   @override
   Future<bool> shutdown(bool isUser) async {
     _shutdownCompleter = Completer();
-    if (system.isWindows) {
-      await request.stopCoreByHelper();
-    }
+    // helper 路径由 helper 收掉它拉起的 Core，直连路径由 lease 收掉自己拉起的进程。
+    await _manager.stop();
     _transport.disconnected();
-    _process?.kill();
-    _process = null;
     _clearCompleter();
     if (isUser) {
       return _shutdownCompleter.future;

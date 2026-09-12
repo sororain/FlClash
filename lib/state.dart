@@ -28,7 +28,6 @@ class GlobalState {
   static GlobalState? _instance;
   final navigatorKey = GlobalKey<NavigatorState>();
   bool isPre = true;
-  late final String coreSHA256;
   late final PackageInfo packageInfo;
   Function? updateCurrentDelayDebounce;
   late Measure measure;
@@ -53,7 +52,8 @@ class GlobalState {
   }
 
   Future<ProviderContainer> init(int version) async {
-    coreSHA256 = const String.fromEnvironment('CORE_SHA256');
+    // Core SHA256 不再走编译期注入：helper 与 App 都在运行期读 Core 旁边的
+    // manifest.json（见 lib/core/desktop/core_manifest.dart）。
     isPre = const String.fromEnvironment('APP_ENV') != 'stable';
     await _initDynamicColor();
     return _initData(version);

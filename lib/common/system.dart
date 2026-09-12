@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:ffi/ffi.dart';
 import 'package:sororain/common/common.dart';
+import 'package:sororain/core/desktop/helper_client.dart';
 import 'package:sororain/enum/enum.dart';
 import 'package:sororain/plugins/app.dart';
 import 'package:sororain/state.dart';
@@ -41,12 +42,21 @@ class System {
     };
   }
 
+  /// AppImage 挂在只读 nosuid 的挂载点上，路径每次运行都变：提权留不住。
+  bool get isAppImage => isLinux && Platform.environment.containsKey('APPIMAGE');
+
+  late final bool _hasSystemd = Directory('/run/systemd/system').existsSync();
+
+  /// Windows 走 helper 服务；Linux 需要 systemd 且不是 AppImage。
+  bool get hasHelperService =>
+      isWindows || (isLinux && !isAppImage && _hasSystemd);
+
   Future<bool> checkIsAdmin() async {
+    if (hasHelperService) {
+      return await helperClient.readiness() == HelperReadiness.ready;
+    }
     final corePath = appPath.corePath.replaceAll(' ', '\\\\ ');
-    if (system.isWindows) {
-      final result = await windows?.checkService();
-      return result == WindowsHelperServiceStatus.running;
-    } else if (system.isMacOS) {
+    if (system.isMacOS) {
       final result = await Process.run('stat', ['-f', '%Su:%Sg %Sp', corePath]);
       final output = result.stdout.trim();
       if (output.startsWith('root:admin') && output.contains('rws')) {
@@ -228,7 +238,8 @@ class Windows {
       return WindowsHelperServiceStatus.none;
     }
     final output = result.stdout.toString();
-    if (output.contains('RUNNING') && await request.pingHelper()) {
+    if (output.contains('RUNNING') &&
+        await helperClient.readiness() == HelperReadiness.ready) {
       return WindowsHelperServiceStatus.running;
     }
     return WindowsHelperServiceStatus.presence;
