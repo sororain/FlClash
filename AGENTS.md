@@ -63,11 +63,20 @@ Tests use `flutter_test`; `mocktail` is the mocking framework when mocks are nee
 flutter test                      # Root package tests (currently test/core/desktop/, 31 tests)
 flutter test test/core/desktop/   # Desktop core stack only
 dart analyze lib                  # Baseline: 0 error / 0 warning / ~229 info (lints only)
+
+# 插件包测试：可以从根目录按路径传入，但见下方前提
+flutter test plugins/proxy/test/proxy_test.dart
+flutter test plugins/setup/setup_hooks/test
 ```
 
 Root `flutter test` only discovers the root package's `test/` directory by default. Include bundled plugin Dart tests by
 passing their paths explicitly, or run `flutter test` from that plugin package directory. Native plugin tests under
 platform folders (for example Windows C++ tests) are not run by `flutter test`.
+
+**插件包测试的前提与现状（2026-09-12 实测，58 通过 / 2 失败）**：
+- `plugins/setup/setup_hooks` 必须**先在该包内**跑一次 `flutter pub get`，否则会报 `Connection closed before test suite loaded`（`target_test.dart` 加载失败）—— 包内 `.dart_tool` 被删掉后就是这样；这是包级依赖解析，根目录的 `pub get` 不覆盖它。
+- `plugins/tray_manager/packages/tray_manager/test/macos_tray_icon_source_test.dart` 目前在 Windows 上 `setUpAll` 阶段即失败（`firstWhere` 抛异常）。该文件与本次构建链迁移无关，失败原因未查。
+- `plugins/rust_api/test_driver/integration_test.dart` 是 **integration test**（需要设备/驱动），不是单测。
 
 **当前实际布局（2026-09-12 核实）**：根包只有 `test/core/desktop/` 三个文件 —— `helper_client_test.dart`（Helper 协议语义：ping 双校验、start 回显与失败码、stop 组合约束）、`launcher_test.dart`（Helper/直连的选择与回退策略）、`manager_test.dart`（`DesktopCoreManager` 状态机）。历史文档里写过的 `test/models`、`test/providers`、`test/common`、`test/database`、`test/widgets`、`test/setup_test.dart` 在本仓库中**并不存在**，不要按那些路径去跑测试。
 
