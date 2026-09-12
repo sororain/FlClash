@@ -1,14 +1,10 @@
 import 'dart:async';
 
-import 'package:sororain/common/common.dart';
-import 'package:sororain/common/tray.dart';
-import 'package:sororain/common/window.dart';
-import 'package:sororain/enum/enum.dart';
-import 'package:sororain/providers/action.dart';
-import 'package:sororain/providers/providers.dart';
-import 'package:sororain/providers/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sororain/common/common.dart';
+import 'package:sororain/enum/enum.dart';
+import 'package:sororain/providers/providers.dart';
 import 'package:tray/tray.dart';
 
 class TrayManager extends ConsumerStatefulWidget {
