@@ -89,6 +89,9 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  # setup.dart 的过渡桥需要直接调用构建器（仅构建脚本使用，不进应用）
+  setup_hooks:
+    path: plugins/setup/setup_hooks
   flutter_lints: ^6.0.0
   json_serializable: ^6.8.0
   build_runner: ^2.14.1

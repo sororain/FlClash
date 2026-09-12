@@ -1483,7 +1483,7 @@ packages:
     source: path
     version: "0.0.1"
   setup_hooks:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       path: "plugins/setup/setup_hooks"
       relative: true
