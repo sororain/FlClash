@@ -26,6 +26,9 @@ dependencies:
   shared_preferences: ^2.5.3
   window_manager: ^0.5.1
   dynamic_color: ^1.8.1
+  # DynamicSchemeVariant 等 UI 类型由 material_ui 提供（wrapper 的托盘标签模块用它）；
+  # 它本是传递依赖，这里显式声明，避免 depend_on_referenced_packages。
+  material_ui: ^1.2.0
   proxy:
     path: plugins/proxy
   window_ext:

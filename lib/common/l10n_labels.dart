@@ -1,5 +1,5 @@
-import 'package:sororain/enum/enum.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:sororain/enum/enum.dart';
 
 import 'app_localizations.dart';
 
