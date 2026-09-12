@@ -1,9 +1,15 @@
+import 'dart:async';
+
 import 'package:sororain/common/common.dart';
+import 'package:sororain/common/tray.dart';
+import 'package:sororain/common/window.dart';
+import 'package:sororain/enum/enum.dart';
+import 'package:sororain/providers/action.dart';
 import 'package:sororain/providers/providers.dart';
-import 'package:sororain/models/models.dart';
-import 'package:flutter/material.dart';
+import 'package:sororain/providers/state.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tray_manager/tray_manager.dart';
+import 'package:tray/tray.dart';
 
 class TrayManager extends ConsumerStatefulWidget {
   final Widget child;
@@ -11,33 +17,65 @@ class TrayManager extends ConsumerStatefulWidget {
   const TrayManager({super.key, required this.child});
 
   @override
-  ConsumerState<TrayManager> createState() => _TrayContainerState();
+  ConsumerState<TrayManager> createState() => _TrayManagerState();
 }
 
-class _TrayContainerState extends ConsumerState<TrayManager> with TrayListener {
+class _TrayManagerState extends ConsumerState<TrayManager> {
+  StreamSubscription<TrayEvent>? _subscription;
+
   @override
   void initState() {
     super.initState();
-    trayManager.addListener(this);
+    _subscription = Tray.instance.events.listen(_handleTrayEvent);
     ref.listenManual(trayStateProvider, (prev, next) {
       if (prev != next) {
-        tray?.update(
-          trayState: next,
-          traffic: ref.read(
-            trafficsProvider.select((state) => state.list.safeLast(Traffic())),
-          ),
-        );
+        _reportFailure(ref.read(systemActionProvider.notifier).updateTray());
       }
     });
+    ref.listenManual(
+      appSettingProvider.select((state) => state.locale),
+      (prev, next) {
+        if (prev != null && prev != next) {
+          _reportFailure(ref.read(systemActionProvider.notifier).updateTray());
+        }
+      },
+    );
     if (system.isMacOS) {
       ref.listenManual(trayTitleStateProvider, (prev, next) {
         if (prev != next) {
-          tray?.updateTrayTitle(
-            showTrayTitle: next.showTrayTitle,
-            traffic: next.traffic,
+          _reportFailure(
+            appTray?.updateTitle(
+              showTrayTitle: next.showTrayTitle,
+              traffic: next.traffic,
+            ),
           );
         }
       });
+    }
+  }
+
+  void _reportFailure(Future<void>? operation) {
+    if (operation == null) {
+      return;
+    }
+    unawaited(
+      operation.onError<Object>((error, stackTrace) {
+        commonPrint.log(
+          'Tray operation failed: ${compactError(error)}',
+          logLevel: LogLevel.error,
+        );
+      }),
+    );
+  }
+
+  void _handleTrayEvent(TrayEvent event) {
+    switch (event) {
+      case TrayIconActivated():
+        window?.show();
+      case TrayMenuRequested():
+        _reportFailure(Tray.instance.openMenu());
+      case TrayMenuItemSelected():
+        render?.active();
     }
   }
 
@@ -47,26 +85,8 @@ class _TrayContainerState extends ConsumerState<TrayManager> with TrayListener {
   }
 
   @override
-  void onTrayIconRightMouseDown() {
-    // ignore: deprecated_member_use
-    trayManager.popUpContextMenu(bringAppToFront: true);
-  }
-
-  @override
-  void onTrayMenuItemClick(MenuItem menuItem) {
-    render?.active();
-    super.onTrayMenuItemClick(menuItem);
-  }
-
-  @override
-  onTrayIconMouseDown() {
-    window?.show();
-  }
-
-  @override
-  dispose() {
-    trayManager.removeListener(this);
+  void dispose() {
+    _subscription?.cancel();
     super.dispose();
   }
 }
-

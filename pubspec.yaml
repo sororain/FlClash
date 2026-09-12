@@ -36,8 +36,8 @@ dependencies:
   mobile_scanner: ^7.0.1
   app_links: ^7.0.0
   win32_registry: ^2.0.0
-  tray_manager:
-    path: plugins/tray_manager/packages/tray_manager
+  tray:
+    path: plugins/tray
   wifi_ssid:
     path: plugins/wifi_ssid
   collection: ^1.19.1
@@ -109,6 +109,8 @@ flutter:
     - assets/images/empty/
     - assets/images/icon/
     - assets/images/avatar/
+    - assets/images/tray/unix/
+    - assets/images/tray/windows/
   fonts:
     - family: JetBrainsMono
       fonts:

@@ -25,7 +25,7 @@ class SystemAction extends _$SystemAction {
         if (needSave) preferences.saveConfig(ref.read(configProvider)),
         if (macOS != null) macOS!.updateDns(true),
         if (proxy != null) proxy!.stopProxy(),
-        if (tray != null) tray!.destroy(),
+        if (appTray != null) appTray!.shutdown(),
       ]);
       await window?.close();
       await coreController.destroy();
@@ -75,13 +75,16 @@ class SystemAction extends _$SystemAction {
   }
 
   Future<void> updateTray() async {
-    tray?.update(
+    appTray?.update(
       trayState: ref.read(trayStateProvider),
       traffic: ref.read(
         trafficsProvider.select(
           (state) => state.list.safeLast(const Traffic()),
         ),
       ),
+      // 必须是容器级 read：托盘菜单里会 read(systemActionProvider.notifier)，
+      // 若把自己的 ref 传进去，Riverpod 会断言 "A provider cannot depend on itself"。
+      read: globalState.container.read,
     );
   }
 

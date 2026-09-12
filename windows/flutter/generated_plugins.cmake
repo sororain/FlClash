@@ -12,7 +12,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   proxy
   screen_retriever_windows
   sqlite3_flutter_libs
-  tray_manager
+  tray
   url_launcher_windows
   wifi_ssid
   window_ext
