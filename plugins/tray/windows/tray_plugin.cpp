@@ -1,6 +1,15 @@
-#include "tray_plugin.h"
+﻿#include "tray_plugin.h"
 
 #include <strsafe.h>
+#include <shlobj.h>
+
+#include <cstdarg>
+#include <cstdio>
+#include <cstring>
+#include <fstream>
+#include <mutex>
+#include <sstream>
+#include <thread>
 
 #include <variant>
 
@@ -8,8 +17,39 @@ namespace tray {
 
 namespace {
 
+// 临时诊断:记录托盘原生的每个关键路径,复现"卡死关闭"后以最后几行定位崩溃点。
+void Nlog(const char* fmt, ...) {
+  static std::mutex log_mutex;
+  std::lock_guard<std::mutex> lock(log_mutex);
+  char path[MAX_PATH];
+  if (::SHGetFolderPathA(nullptr, CSIDL_LOCAL_APPDATA, nullptr, 0,
+                         path) != S_OK) {
+    return;
+  }
+  ::strcat_s(path, "\\tray_native.log");
+  std::ofstream file(path, std::ios::app);
+  if (!file.is_open()) {
+    return;
+  }
+  std::ostringstream stream;
+  auto thread_id = std::this_thread::get_id();
+  stream << '[' << thread_id << "] ";
+  va_list args;
+  va_start(args, fmt);
+  char buffer[512];
+  std::vsnprintf(buffer, sizeof(buffer), fmt, args);
+  va_end(args);
+  stream << buffer << '\n';
+  file.write(stream.str().c_str(), stream.str().size());
+}
+
 constexpr UINT kTrayCallbackMessage = WM_USER + 1;
 constexpr UINT kTrayIconId = 1;
+// 延后回调 Dart 的自定义消息：窗口过程与 TrackPopupMenu 的嵌套消息循环里不能直接
+// 进引擎（会以重入方式崩在 flutter_windows.dll）。
+constexpr UINT kTrayDeferredIconActivated = WM_USER + 2;
+constexpr UINT kTrayDeferredMenuRequested = WM_USER + 3;
+constexpr UINT kTrayDeferredMenuItemSelected = WM_USER + 4;
 
 const flutter::EncodableValue* ValueAt(const flutter::EncodableMap& map,
                                        const char* key) {
@@ -90,7 +130,13 @@ TrayPlugin::~TrayPlugin() {
 }
 
 HWND TrayPlugin::MainWindow() {
-  return ::GetAncestor(registrar_->GetView()->GetNativeWindow(), GA_ROOT);
+  if (window_ == nullptr) {
+    auto* view = registrar_->GetView();
+    if (view != nullptr) {
+      window_ = ::GetAncestor(view->GetNativeWindow(), GA_ROOT);
+    }
+  }
+  return window_;
 }
 
 void TrayPlugin::SendEvent(const char* name,
@@ -163,6 +209,7 @@ bool TrayPlugin::Show(const flutter::EncodableMap& arguments) {
   const std::string* icon_path =
       icon == nullptr ? nullptr : StringAt(*icon, "path");
   if (icon_path == nullptr) {
+    Nlog("Show fail (no icon path)");
     return false;
   }
 
@@ -234,12 +281,14 @@ bool TrayPlugin::OpenMenu() {
   const int command = ::TrackPopupMenu(
       menu_, TPM_BOTTOMALIGN | TPM_LEFTALIGN | TPM_RETURNCMD | TPM_RIGHTBUTTON,
       cursor.x, cursor.y, 0, window, nullptr);
+  Nlog("OpenMenu TrackPopupMenu cmd=%d", command);
   ::PostMessageW(window, WM_NULL, 0, 0);
 
   if (command != 0) {
-    flutter::EncodableMap arguments;
-    arguments[flutter::EncodableValue("id")] = flutter::EncodableValue(command);
-    SendEvent("onMenuItemSelected", flutter::EncodableValue(arguments));
+    // 此刻仍在 TrackPopupMenu 的嵌套消息循环里，且 Dart 正阻塞等待本方法返回：
+    // 直接回调 Dart 会重入引擎，改为投递后再发。
+    pending_menu_command_ = static_cast<UINT_PTR>(command);
+    ::PostMessageW(window, kTrayDeferredMenuItemSelected, 0, 0);
   }
   return true;
 }
@@ -248,16 +297,38 @@ std::optional<LRESULT> TrayPlugin::HandleWindowProc(HWND window,
                                                     UINT message,
                                                     WPARAM wparam,
                                                     LPARAM lparam) {
+  if (window != nullptr) {
+    window_ = window;
+  }
+
+  // 延后到本轮消息分发结束之后再回调 Dart。
+  if (message == kTrayDeferredIconActivated) {
+    SendEvent("onIconActivated", flutter::EncodableValue());
+    return std::nullopt;
+  }
+  if (message == kTrayDeferredMenuRequested) {
+    SendEvent("onMenuRequested", flutter::EncodableValue());
+    return std::nullopt;
+  }
+  if (message == kTrayDeferredMenuItemSelected) {
+    flutter::EncodableMap arguments;
+    arguments[flutter::EncodableValue("id")] =
+        flutter::EncodableValue(static_cast<int64_t>(pending_menu_command_));
+    SendEvent("onMenuItemSelected", flutter::EncodableValue(arguments));
+    return std::nullopt;
+  }
+
   if (message == WM_DESTROY) {
     Hide();
     return std::nullopt;
   }
 
   if (message == kTrayCallbackMessage) {
+    // 只记录点击；鼠标移动（0x200）每次划过图标都会来，逐条写日志会把 UI 拖住。
     if (lparam == WM_LBUTTONUP) {
-      SendEvent("onIconActivated", flutter::EncodableValue());
+      ::PostMessageW(window, kTrayDeferredIconActivated, 0, 0);
     } else if (lparam == WM_RBUTTONUP) {
-      SendEvent("onMenuRequested", flutter::EncodableValue());
+      ::PostMessageW(window, kTrayDeferredMenuRequested, 0, 0);
     }
     return std::nullopt;
   }
@@ -306,3 +377,4 @@ void TrayPlugin::HandleMethodCall(
 }
 
 }  // namespace tray
+

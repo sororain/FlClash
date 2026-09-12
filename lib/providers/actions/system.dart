@@ -75,6 +75,11 @@ class SystemAction extends _$SystemAction {
   }
 
   Future<void> updateTray() async {
+    // 临时排查开关：SORORAIN_NO_TRAY=1 启动时完全不碰托盘（连图标都不创建），
+    // 用于二分定位“开 VPN / 改托盘状态就崩”是否来自托盘链路。定位完就删。
+    if (Platform.environment['SORORAIN_NO_TRAY'] == '1') {
+      return;
+    }
     appTray?.update(
       trayState: ref.read(trayStateProvider),
       traffic: ref.read(

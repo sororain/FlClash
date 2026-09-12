@@ -133,7 +133,20 @@ class CoreService extends CoreHandlerInterface {
       _handleInvokeCrashEvent();
       return;
     }
-    await _transport.connectionCompleter.future;
+    // 不给超时的话，核心进程起来但始终不连（例如 TUN 启动失败卡住）会让
+    // start() 永远挂着，UI 停在“连接中”的表现就是卡死。
+    try {
+      await _transport.connectionCompleter.future.timeout(
+        const DesktopCoreTimeouts().connection,
+      );
+    } on TimeoutException {
+      commonPrint.log(
+        'Core did not accept the transport connection in time',
+        logLevel: LogLevel.error,
+      );
+      await _manager.stop();
+      _handleInvokeCrashEvent();
+    }
   }
 
   @override
