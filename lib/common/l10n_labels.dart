@@ -15,7 +15,7 @@ extension PageLabelL10n on PageLabel {
       PageLabel.requests => appLocalizations.requests,
       PageLabel.resources => appLocalizations.resources,
       PageLabel.connections => appLocalizations.connections,
-      // 补齐：V2Board 相关页面（users/shop/orders/wallet/profile/invite）。
+      // 补齐：以下为本项目新增的页面。
       PageLabel.users => appLocalizations.users,
       PageLabel.shop => appLocalizations.shop,
       PageLabel.orders => appLocalizations.orders,
