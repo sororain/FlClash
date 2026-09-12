@@ -15,9 +15,13 @@ extension PageLabelL10n on PageLabel {
       PageLabel.requests => appLocalizations.requests,
       PageLabel.resources => appLocalizations.resources,
       PageLabel.connections => appLocalizations.connections,
-      // 我们比上游多了 users/shop/orders/wallet/profile/invite（V2Board 相关页），
-      // 这些页没有对应 l10n 文案，回退到枚举名。
-      _ => this.name,
+      // 上游没有的页面（V2Board）：users/shop/orders/wallet/profile/invite。
+      PageLabel.users => appLocalizations.users,
+      PageLabel.shop => appLocalizations.shop,
+      PageLabel.orders => appLocalizations.orders,
+      PageLabel.wallet => appLocalizations.wallet,
+      PageLabel.profile => appLocalizations.profile,
+      PageLabel.invite => appLocalizations.invite,
     };
   }
 
@@ -31,8 +35,13 @@ extension PageLabelL10n on PageLabel {
       PageLabel.dashboard ||
       PageLabel.proxies ||
       PageLabel.profiles ||
-      PageLabel.tools => null,
-      _ => null,
+      PageLabel.users ||
+      PageLabel.tools ||
+      PageLabel.shop ||
+      PageLabel.orders ||
+      PageLabel.wallet ||
+      PageLabel.profile ||
+      PageLabel.invite => null,
     };
   }
 }
