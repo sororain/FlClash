@@ -87,6 +87,11 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "account": MessageLookupByLibrary.simpleMessage("Account"),
     "action": MessageLookupByLibrary.simpleMessage("Action"),
+    "actionMode": MessageLookupByLibrary.simpleMessage("Switch mode"),
+    "actionProxy": MessageLookupByLibrary.simpleMessage("System proxy"),
+    "actionStart": MessageLookupByLibrary.simpleMessage("Start/Stop"),
+    "actionTun": MessageLookupByLibrary.simpleMessage("TUN"),
+    "actionView": MessageLookupByLibrary.simpleMessage("Show/Hide"),
     "action_mode": MessageLookupByLibrary.simpleMessage("Switch mode"),
     "action_proxy": MessageLookupByLibrary.simpleMessage("System proxy"),
     "action_start": MessageLookupByLibrary.simpleMessage("Start/Stop"),
@@ -746,6 +751,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "Restore configuration files only",
     ),
     "restoreStrategy": MessageLookupByLibrary.simpleMessage("Restore strategy"),
+    "restoreStrategyCompatible": MessageLookupByLibrary.simpleMessage(
+      "Compatible",
+    ),
+    "restoreStrategyOverride": MessageLookupByLibrary.simpleMessage("Override"),
     "restoreStrategy_compatible": MessageLookupByLibrary.simpleMessage(
       "Compatible",
     ),
@@ -758,6 +767,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "Config listen route address",
     ),
     "routeMode": MessageLookupByLibrary.simpleMessage("Route mode"),
+    "routeModeBypassPrivate": MessageLookupByLibrary.simpleMessage(
+      "Bypass private addresses",
+    ),
+    "routeModeConfig": MessageLookupByLibrary.simpleMessage("Use config"),
     "routeMode_bypassPrivate": MessageLookupByLibrary.simpleMessage(
       "Bypass private route address",
     ),
@@ -1018,6 +1031,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("Whitelist mode"),
     "yearsAgo": m19,
+    "zhCN": MessageLookupByLibrary.simpleMessage("Simplified Chinese"),
     "zh_CN": MessageLookupByLibrary.simpleMessage("Simplified Chinese"),
   };
 }

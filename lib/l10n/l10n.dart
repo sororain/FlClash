@@ -4368,6 +4368,81 @@ class AppLocalizations {
   String get invite {
     return Intl.message('My Invites', name: 'invite', desc: '', args: []);
   }
+
+  /// `Start/Stop`
+  String get actionStart {
+    return Intl.message('Start/Stop', name: 'actionStart', desc: '', args: []);
+  }
+
+  /// `Show/Hide`
+  String get actionView {
+    return Intl.message('Show/Hide', name: 'actionView', desc: '', args: []);
+  }
+
+  /// `Switch mode`
+  String get actionMode {
+    return Intl.message('Switch mode', name: 'actionMode', desc: '', args: []);
+  }
+
+  /// `System proxy`
+  String get actionProxy {
+    return Intl.message(
+      'System proxy',
+      name: 'actionProxy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `TUN`
+  String get actionTun {
+    return Intl.message('TUN', name: 'actionTun', desc: '', args: []);
+  }
+
+  /// `Bypass private addresses`
+  String get routeModeBypassPrivate {
+    return Intl.message(
+      'Bypass private addresses',
+      name: 'routeModeBypassPrivate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Use config`
+  String get routeModeConfig {
+    return Intl.message(
+      'Use config',
+      name: 'routeModeConfig',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Compatible`
+  String get restoreStrategyCompatible {
+    return Intl.message(
+      'Compatible',
+      name: 'restoreStrategyCompatible',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Override`
+  String get restoreStrategyOverride {
+    return Intl.message(
+      'Override',
+      name: 'restoreStrategyOverride',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Simplified Chinese`
+  String get zhCN {
+    return Intl.message('Simplified Chinese', name: 'zhCN', desc: '', args: []);
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

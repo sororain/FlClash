@@ -86,6 +86,11 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "account": MessageLookupByLibrary.simpleMessage("Аккаунт"),
     "action": MessageLookupByLibrary.simpleMessage("Действие"),
+    "actionMode": MessageLookupByLibrary.simpleMessage("Переключить режим"),
+    "actionProxy": MessageLookupByLibrary.simpleMessage("Системный прокси"),
+    "actionStart": MessageLookupByLibrary.simpleMessage("Старт/Стоп"),
+    "actionTun": MessageLookupByLibrary.simpleMessage("TUN"),
+    "actionView": MessageLookupByLibrary.simpleMessage("Показать/Скрыть"),
     "action_mode": MessageLookupByLibrary.simpleMessage("Переключить режим"),
     "action_proxy": MessageLookupByLibrary.simpleMessage("Системный прокси"),
     "action_start": MessageLookupByLibrary.simpleMessage("Старт/Стоп"),
@@ -787,6 +792,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "restoreStrategy": MessageLookupByLibrary.simpleMessage(
       "Стратегия восстановления",
     ),
+    "restoreStrategyCompatible": MessageLookupByLibrary.simpleMessage(
+      "Совместимость",
+    ),
+    "restoreStrategyOverride": MessageLookupByLibrary.simpleMessage(
+      "Перезапись",
+    ),
     "restoreStrategy_compatible": MessageLookupByLibrary.simpleMessage(
       "Совместимый",
     ),
@@ -801,6 +812,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Настройка адреса прослушивания маршрутизации",
     ),
     "routeMode": MessageLookupByLibrary.simpleMessage("Режим маршрутизации"),
+    "routeModeBypassPrivate": MessageLookupByLibrary.simpleMessage(
+      "Обходить частные адреса",
+    ),
+    "routeModeConfig": MessageLookupByLibrary.simpleMessage(
+      "Использовать конфигурацию",
+    ),
     "routeMode_bypassPrivate": MessageLookupByLibrary.simpleMessage(
       "Обход частных адресов маршрутизации",
     ),
@@ -1083,6 +1100,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Режим белого списка",
     ),
     "yearsAgo": m19,
+    "zhCN": MessageLookupByLibrary.simpleMessage("Упрощённый китайский"),
     "zh_CN": MessageLookupByLibrary.simpleMessage("Упрощенный китайский"),
   };
 }

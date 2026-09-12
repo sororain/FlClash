@@ -538,5 +538,15 @@
   "shop": "商店",
   "orders": "我的订单",
   "wallet": "我的钱包",
-  "invite": "我的邀请"
+  "invite": "我的邀请",
+  "actionStart": "启动/停止",
+  "actionView": "显示/隐藏",
+  "actionMode": "切换模式",
+  "actionProxy": "系统代理",
+  "actionTun": "虚拟网卡",
+  "routeModeBypassPrivate": "绕过私有路由地址",
+  "routeModeConfig": "使用配置",
+  "restoreStrategyCompatible": "兼容",
+  "restoreStrategyOverride": "覆盖",
+  "zhCN": "中文简体"
 }

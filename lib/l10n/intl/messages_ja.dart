@@ -77,6 +77,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "accessControlSettings": MessageLookupByLibrary.simpleMessage("アクセス制御設定"),
     "account": MessageLookupByLibrary.simpleMessage("アカウント"),
     "action": MessageLookupByLibrary.simpleMessage("アクション"),
+    "actionMode": MessageLookupByLibrary.simpleMessage("モード切替"),
+    "actionProxy": MessageLookupByLibrary.simpleMessage("システムプロキシ"),
+    "actionStart": MessageLookupByLibrary.simpleMessage("開始/停止"),
+    "actionTun": MessageLookupByLibrary.simpleMessage("TUN"),
+    "actionView": MessageLookupByLibrary.simpleMessage("表示/非表示"),
     "action_mode": MessageLookupByLibrary.simpleMessage("モード切替"),
     "action_proxy": MessageLookupByLibrary.simpleMessage("システムプロキシ"),
     "action_start": MessageLookupByLibrary.simpleMessage("開始/停止"),
@@ -590,12 +595,18 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "restoreOnlyConfig": MessageLookupByLibrary.simpleMessage("設定ファイルのみを復元する"),
     "restoreStrategy": MessageLookupByLibrary.simpleMessage("復元ストラテジー"),
+    "restoreStrategyCompatible": MessageLookupByLibrary.simpleMessage("互換"),
+    "restoreStrategyOverride": MessageLookupByLibrary.simpleMessage("上書き"),
     "restoreStrategy_compatible": MessageLookupByLibrary.simpleMessage("互換"),
     "restoreStrategy_override": MessageLookupByLibrary.simpleMessage("上書き"),
     "restoreSuccess": MessageLookupByLibrary.simpleMessage("復元に成功しました"),
     "routeAddress": MessageLookupByLibrary.simpleMessage("ルートアドレス"),
     "routeAddressDesc": MessageLookupByLibrary.simpleMessage("ルートアドレスを設定"),
     "routeMode": MessageLookupByLibrary.simpleMessage("ルートモード"),
+    "routeModeBypassPrivate": MessageLookupByLibrary.simpleMessage(
+      "プライベートアドレスをバイパス",
+    ),
+    "routeModeConfig": MessageLookupByLibrary.simpleMessage("設定を使用"),
     "routeMode_bypassPrivate": MessageLookupByLibrary.simpleMessage(
       "プライベートルートをバイパス",
     ),
@@ -822,6 +833,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage("WebDAV設定"),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("ホワイトリストモード"),
     "yearsAgo": m19,
+    "zhCN": MessageLookupByLibrary.simpleMessage("簡体字中国語"),
     "zh_CN": MessageLookupByLibrary.simpleMessage("簡体字中国語"),
   };
 }

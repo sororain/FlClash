@@ -538,5 +538,15 @@
   "shop": "Магазин",
   "orders": "Мои заказы",
   "wallet": "Мой кошелек",
-  "invite": "Мои приглашения"
+  "invite": "Мои приглашения",
+  "actionStart": "Старт/Стоп",
+  "actionView": "Показать/Скрыть",
+  "actionMode": "Переключить режим",
+  "actionProxy": "Системный прокси",
+  "actionTun": "TUN",
+  "routeModeBypassPrivate": "Обходить частные адреса",
+  "routeModeConfig": "Использовать конфигурацию",
+  "restoreStrategyCompatible": "Совместимость",
+  "restoreStrategyOverride": "Перезапись",
+  "zhCN": "Упрощённый китайский"
 }

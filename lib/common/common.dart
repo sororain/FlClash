@@ -16,6 +16,7 @@ export 'indexing.dart';
 export 'iterable.dart';
 export 'javascript.dart';
 export 'keyboard.dart';
+export 'l10n_labels.dart';
 export 'launch.dart';
 export 'link.dart';
 export 'lock.dart';

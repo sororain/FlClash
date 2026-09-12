@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:tray/tray.dart';
 
 import 'app_localizations.dart';
+import 'l10n_labels.dart';
 import 'app_ports.dart';
 import 'constant.dart';
 import 'provider_reader.dart';
@@ -128,7 +129,7 @@ class AppTray implements TrayPort {
       const TrayMenuSeparator(),
       for (final mode in Mode.values)
         TrayMenuCheckbox(
-          label: mode.name,
+          label: mode.label,
           checked: mode == trayState.mode,
           onSelected: () {
             setupAction.changeMode(mode);

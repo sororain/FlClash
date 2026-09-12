@@ -538,5 +538,15 @@
   "shop": "ショップ",
   "orders": "注文履歴",
   "wallet": "ウォレット",
-  "invite": "招待"
+  "invite": "招待",
+  "actionStart": "開始/停止",
+  "actionView": "表示/非表示",
+  "actionMode": "モード切替",
+  "actionProxy": "システムプロキシ",
+  "actionTun": "TUN",
+  "routeModeBypassPrivate": "プライベートアドレスをバイパス",
+  "routeModeConfig": "設定を使用",
+  "restoreStrategyCompatible": "互換",
+  "restoreStrategyOverride": "上書き",
+  "zhCN": "簡体字中国語"
 }

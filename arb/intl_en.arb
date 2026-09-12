@@ -538,5 +538,15 @@
   "shop": "Shop",
   "orders": "My Orders",
   "wallet": "My Wallet",
-  "invite": "My Invites"
+  "invite": "My Invites",
+  "actionStart": "Start/Stop",
+  "actionView": "Show/Hide",
+  "actionMode": "Switch mode",
+  "actionProxy": "System proxy",
+  "actionTun": "TUN",
+  "routeModeBypassPrivate": "Bypass private addresses",
+  "routeModeConfig": "Use config",
+  "restoreStrategyCompatible": "Compatible",
+  "restoreStrategyOverride": "Override",
+  "zhCN": "Simplified Chinese"
 }
