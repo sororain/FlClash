@@ -58,6 +58,9 @@ CLAUDE.md
 /android/core/**/cmake-build-*/
 /android/core/**/jniLibs/
 
+# 插件平台的 Gradle 缓存（构建垃圾，曾误入库）
+.gradle/
+
 #Sororain
 /libclash/
 /android/app/src/main/jniLibs/
