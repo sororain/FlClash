@@ -21,11 +21,12 @@ dart setup.dart linux
 dart setup.dart windows
 dart setup.dart android
 
-# Build only the Go core (skip Flutter packaging)
-bash plugins/setup/buildkit/run_build_tool.sh macos
-bash plugins/setup/buildkit/run_build_tool.sh linux
-bash plugins/setup/buildkit/run_build_tool.sh windows
-bash plugins/setup/buildkit/run_build_tool.sh android
+# Build only the Go core (+ Windows Rust helper) and stop before packaging
+# (--out core; env.json is still written so the app keeps its compile-time SHA256)
+dart setup.dart windows --out core
+dart setup.dart macos --out core
+dart setup.dart linux --out core
+dart setup.dart android --out core --arch arm64
 ```
 
 ### Flutter Development
@@ -176,31 +177,37 @@ Shared: `ConnectivityManager`, `CoreManager`, `AppStateManager`, `StatusManager`
 
 `setup.dart` (project root) is the release build orchestrator:
 
-1. On Windows, pre-builds Go core via `dart run build_tool windows` and reads `core_sha256.json`
-2. Writes `env.json` (APP_ENV)
-3. Passes SHA256 as `--dart-define=CORE_SHA256=$val` (compile-time embedded, secure; Windows only)
-4. Activates `flutter_distributor` for packaging
+1. Builds the Go core inline (`Build.buildCore` in `setup.dart`): `go build -ldflags=-w -s -tags=with_gvisor`, with
+   `GOOS`/`GOARCH`/`CGO_ENABLED` per target. Android uses `-buildmode=c-shared` + NDK clang, then moves the `.so` into
+   `libclash/android/<abi>/` (Gradle copies it on into `android/core/src/main/jniLibs/`).
+2. On Windows, also builds the Rust helper (`Build.buildHelper`): `cargo build --release --features windows-service` in
+   `services/helper/` with `TOKEN=<core sha256>`.
+3. Writes `env.json` (`APP_ENV`, `CORE_SHA256`, `ANDROID_ARCH`), consumed via `--dart-define-from-file=env.json`.
+4. Activates the global `flutter_distributor` (pinned git ref `v0.6.11-flclash.2`) for packaging, then runs it via
+   `dart pub global run`. `--out core` stops after step 3 (no packaging).
 
-Go core building is handled by `build_tool`, a standalone Dart CLI in `plugins/setup/buildkit/build_tool/`.
-Platform build hooks inside `flutter build` trigger `build_tool` automatically:
+There is no `core_sha256.json` any more — 0.8.97 dropped it and nothing reads it: the core SHA is computed by
+`setup.dart` from the artifact it just built.
 
-- **macOS:** podspec script phase → `build_pod.sh` → `build_tool macos`
-- **Linux:** CMake include → `buildkit/cmake/buildkit.cmake` → `build_tool linux`
-- **Windows:** CMake include → `buildkit/cmake/buildkit.cmake` → `build_tool windows` (debug: `--dev` via `CMAKE_BUILD_TYPE`)
-- **Android:** Gradle include → `buildkit/gradle/plugin.gradle` → `build_tool android`
+A Dart build hook also exists now (the 0.8.97 model): `plugins/setup/hook/build.dart` → `setup_hooks`'
+`CoreBuilder`/`RustBuilder` build core + helper and write `libclash/<platform>/manifest.json`, which the app can read at
+runtime via `CoreManifest`. It is currently **disabled** by `pubspec.yaml` → `hooks.user_defines.setup.build_assets:
+false`, because the live desktop path still consumes the compile-time `CORE_SHA256` (a `--dart-define` must exist before
+`flutter build`, while the hook only runs during it). Enable it only after the desktop core stack reads `manifest.json`
+at runtime.
 
-**Windows helper auth (release):** Core SHA256 is embedded in both the Flutter app (`--dart-define`) and the Rust
-helper (`TOKEN` env var during cargo build). The Dart app pings the helper and verifies the token matches.
+**Windows helper auth (release):** Core SHA256 is embedded in both the Flutter app (`--dart-define`) and the Rust helper
+(`TOKEN` env var during cargo build; `services/helper/build.rs` also accepts `CORE_SHA256`, the variable the Dart build
+hook passes). The Dart app pings the helper and verifies the token matches.
 
 **Windows helper auth (debug):** The Rust helper skips token verification when built in debug mode
 (`cfg!(debug_assertions)`), so `flutter run` works without any SHA256 dance.
 
-`plugins/setup/` is an FFI plugin that exists solely as a build harness — it carries no Dart API, only platform build hooks
-(podspec, CMake, Gradle) that trigger Go compilation. Windows builds also compile a Rust helper (`services/helper/`) via
-`RustBuilder`.
+`plugins/setup/` is a build-harness package with no Dart API and no platform folders; it exists only to provide the Dart
+build hook above (Go core + Rust helper compilation).
 
-Build configuration defaults live in `build_tool/lib/src/options.dart` and can be overridden via `build_config.yaml`
-in the project root.
+Build configuration defaults live in `plugins/setup/setup_hooks/lib/src/options.dart` and can be overridden via
+`build_config.yaml` in the project root.
 
 Architecture detection is automatic (host arch via `uname -m` on Unix, `PROCESSOR_ARCHITECTURE` on Windows). The
 `--description` flag passed to flutter_distributor adds arch suffix to artifact names (e.g.,
@@ -208,13 +215,16 @@ Architecture detection is automatic (host arch via `uname -m` on Unix, `PROCESSO
 
 ### Local Plugins (`plugins/`)
 
-- `setup` - Build harness FFI plugin (triggers Go/Rust compilation per platform)
+- `setup` - Build harness package (Dart build hook that triggers Go/Rust compilation per platform)
+- `rust_api` - Flutter Rust Bridge package built by a Dart build hook (no platform folders)
 - `proxy` - System proxy configuration
-- `rust_api` - Flutter Rust Bridge FFI plugin (named pipe / local socket communication)
+- `rust_api` - Flutter Rust Bridge package built by a Dart build hook (no platform folders)
 - `tray_manager` - System tray (forked/custom)
 - `wifi_ssid` - Wi-Fi SSID detection
 - `window_ext` - Window extensions
-- `flutter_distributor` - App packaging/distribution
+
+`flutter_distributor` is no longer vendored in `plugins/`; `setup.dart` activates it globally from a pinned git ref
+and runs it via `dart pub global run`.
 
 ### Rust Helper Service (`services/helper/`)
 

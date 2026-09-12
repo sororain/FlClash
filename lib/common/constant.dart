@@ -12,6 +12,10 @@ import 'package:flutter/material.dart';
 const appName = 'Sororain';
 const appHelperService = 'SororainHelperService';
 const coreName = 'clash.meta';
+const coreManifestName = 'manifest.json';
+const helperSocketPath = '/run/sororain/helper.sock';
+const helperProtocolVersionHeader = 'x-sororain-helper-protocol';
+const helperProtocolVersion = '6';
 const browserUa =
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 const packageName = 'com.sororain.clash';

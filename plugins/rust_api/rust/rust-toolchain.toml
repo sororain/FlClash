@@ -1,0 +1,14 @@
+[toolchain]
+# native_toolchain_rust refuses a floating channel, so pin it deliberately.
+# 1.95.0 与 0.8.97 保持一致（本机已安装）。
+channel = "1.95.0"
+# ⚠️ native_toolchain_rust 要求必须显式列出 targets（缺失会直接让构建钩子失败）。
+# 这里只列本机工具链已有的 Windows 主机目标，避免首次构建联网下载；
+# 构建其他平台时需要补上对应目标（上游 0.8.97 的完整清单）：
+#   aarch64-apple-darwin, x86_64-apple-darwin,
+#   aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android,
+#   aarch64-pc-windows-msvc,
+#   aarch64-unknown-linux-gnu, x86_64-unknown-linux-gnu
+targets = [
+  "x86_64-pc-windows-msvc",
+]

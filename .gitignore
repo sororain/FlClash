@@ -77,4 +77,3 @@ devtools_options.yaml
 .fvmrc
 app_config.json
 lib/iqoo/
-/setup.dart

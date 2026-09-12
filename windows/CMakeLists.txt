@@ -81,14 +81,47 @@ install(FILES "${FLUTTER_ICU_DATA_FILE}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}
 install(FILES "${FLUTTER_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime)
 
-# Sororain
+# Sororain(三件套由 setup build hook 产至 ../libclash/windows)
 set(CLASH_DIR "../libclash/windows")
+
+# A running Debug Helper holds its exe open and the copy below fails behind an
+# opaque MSB3073; only a Debug install with a changed Helper stops it, matched
+# by path so a Helper registered from an installed release is left alone.
+install(CODE "
+  set(helper_src \"${CMAKE_CURRENT_SOURCE_DIR}/${CLASH_DIR}/SororainHelperService.exe\")
+  set(helper_dst \"${INSTALL_BUNDLE_LIB_DIR}/SororainHelperService.exe\")
+  if(\"\${CMAKE_INSTALL_CONFIG_NAME}\" STREQUAL \"Debug\" AND EXISTS \"\${helper_dst}\")
+    file(SHA256 \"\${helper_src}\" helper_src_hash)
+    file(SHA256 \"\${helper_dst}\" helper_dst_hash)
+    if(NOT helper_src_hash STREQUAL helper_dst_hash)
+      message(STATUS \"Stopping the Helper running from \${helper_dst} before installing the Debug build\")
+      file(TO_NATIVE_PATH \"\${helper_dst}\" helper_dst_native)
+      execute_process(COMMAND powershell -NoProfile -NonInteractive -Command
+        \"Get-Process -Name SororainHelperService -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq '\${helper_dst_native}' } | Stop-Process -Force\"
+        OUTPUT_QUIET ERROR_QUIET)
+    endif()
+  endif()
+" COMPONENT Runtime)
 
 install(PROGRAMS "${CLASH_DIR}/SororainCore.exe" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime OPTIONAL)
 
 install(PROGRAMS "${CLASH_DIR}/SororainHelperService.exe" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime OPTIONAL)
+
+install(FILES "${CLASH_DIR}/manifest.json" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+  COMPONENT Runtime OPTIONAL)
+
+# Ship the MSVC runtime next to the executable. Neither the installer nor the
+# portable archive can assume a machine already carries VCRedist, and without
+# these the app cannot start at all.
+set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
+include(InstallRequiredSystemLibraries)
+if(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS)
+  install(FILES ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
+    DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+    COMPONENT Runtime)
+endif()
 
 install(FILES "EnableLoopback.exe" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime)

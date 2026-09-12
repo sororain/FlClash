@@ -1,6 +1,17 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:sororain/enum/enum.dart';
+
+String compactError(Object error) {
+  if (error is DioException) {
+    final statusCode = error.response?.statusCode;
+    return statusCode != null
+        ? 'DioException(${error.type.name}, HTTP $statusCode)'
+        : 'DioException(${error.type.name})';
+  }
+  return error.toString();
+}
 
 class CommonPrint {
   static CommonPrint? _instance;

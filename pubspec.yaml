@@ -5,6 +5,16 @@ version: 2.1.2+2026090901
 environment:
   sdk: '>=3.8.0 <4.0.0'
 
+hooks:
+  user_defines:
+    setup:
+      # 暂时保持 false：桌面端仍读编译期 --dart-define 的 CORE_SHA256，
+      # 只有等 v6 桌面栈改读 manifest.json 之后才能打开（见 AGENTS.md）。
+      build_assets: false
+    rust_api:
+      # rust_api 已改为 build-hook(Native Assets)构建，无平台目录，无需时序配合。
+      build_assets: true
+
 dependencies:
   flutter:
     sdk: flutter
@@ -48,7 +58,7 @@ dependencies:
   hotkey_manager: ^0.2.3
   uni_platform: ^0.1.3
   device_info_plus: ^12.2.0
-  connectivity_plus: ^7.0.0
+  connectivity_plus: 7.2.0
   screen_retriever: ^0.2.0
   defer_pointer: ^0.0.2
   flutter_riverpod: ^3.3.1
