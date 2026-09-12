@@ -3,7 +3,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:setup_hooks/setup_hooks.dart' as setup_hooks;
+import 'package:yaml/yaml.dart';
+
 
 String get _current => Directory.current.path;
 
@@ -538,7 +539,19 @@ extension TargetExt on Target {
   }
 }
 
-enum Mode { core, lib }
+/// build hook 被 `hooks.user_defines.*.build_assets: false` 关掉的包名。
+///
+/// 这些包的 core/helper 构建会退化成 no-op，安装包里会缺 core，所以直接拦下报错。
+List<String> packagesNotBuildingAssets(String pubspec) {
+  final document = loadYaml(pubspec);
+  if (document is! Map) return const [];
+  final defines = (document['hooks'] as Map?)?['user_defines'];
+  if (defines is! Map) return const [];
+  return [
+    for (final MapEntry(:key, :value) in defines.entries)
+      if (value is Map && value['build_assets'] == false) key.toString(),
+  ]..sort();
+}
 
 enum Arch { amd64, arm64, arm }
 
@@ -576,36 +589,7 @@ class Build {
 
   static String get outDir => pathJoin(_current, libName);
 
-  static String get _coreDir => pathJoin(_current, 'core');
-
-  static String get _servicesDir => pathJoin(_current, 'services', 'helper');
-
   static String get distPath => pathJoin(_current, 'dist');
-
-  static String _getCc(BuildItem buildItem) {
-    final environment = Platform.environment;
-    if (buildItem.target == Target.android) {
-      final ndk = environment['ANDROID_NDK'];
-      assert(ndk != null);
-      final prebuiltDir = Directory(
-        pathJoin(ndk!, 'toolchains', 'llvm', 'prebuilt'),
-      );
-      final prebuiltDirList = prebuiltDir
-          .listSync()
-          .where((file) => !pathBasename(file.path).startsWith('.'))
-          .toList();
-      final map = {
-        'armeabi-v7a': 'armv7a-linux-androideabi21-clang',
-        'arm64-v8a': 'aarch64-linux-android21-clang',
-        'x86': 'i686-linux-android21-clang',
-        'x86_64': 'x86_64-linux-android21-clang',
-      };
-      return pathJoin(prebuiltDirList.first.path, 'bin', map[buildItem.archName]);
-    }
-    return 'gcc';
-  }
-
-  static String get tags => 'with_gvisor';
 
   static Future<void> exec(
     List<String> executable, {
@@ -632,175 +616,6 @@ class Build {
     });
     final exitCode = await process.exitCode;
     if (exitCode != 0 && name != null) throw '$name error';
-  }
-
-  static Future<String> calcSha256(String filePath) async {
-    final file = File(filePath);
-    if (!await file.exists()) {
-      stderr.writeln('File not exists: $filePath');
-      exit(1);
-    }
-    if (Platform.isWindows) {
-      final result = await Process.run('certutil', [
-        '-hashfile',
-        filePath,
-        'SHA256',
-      ]);
-      return result.stdout.toString().split('\n').skip(1).first.trim();
-    } else {
-      final result = await Process.run('sha256sum', [filePath]);
-      return result.stdout.toString().split(' ').first.trim();
-    }
-  }
-
-  /// 过渡桥：用 plugins/setup 的构建器（0.8.97 的 hook 逻辑）构建 Core/Helper。
-  ///
-  /// 与 [buildCore] 的差别：参数取自 build_config.yaml、带指纹缓存、会在
-  /// `libclash/<platform>/` 写 manifest.json，且 helper 一并构建（env 传 CORE_SHA256）。
-  /// 返回值保持与 [buildCore] 同形态（产物路径列表），供上层算 SHA 写 env.json，
-  /// 这样桌面端的编译期 `CORE_SHA256` 时序不变，现有运行路径零影响。
-  static Future<List<String>> buildCoreWithHooks({
-    required Target target,
-    required Arch arch,
-  }) async {
-    final hooksTarget = setup_hooks.Target.resolve(
-      platform: target.name,
-      goarch: arch.name,
-    );
-    final report = await setup_hooks.buildPlatform(
-      setup_hooks.BuildRequest(rootDir: _current, target: hooksTarget),
-    );
-
-    final corePath = pathJoin(
-      outDir,
-      target.name,
-      '$_coreName${target.executableExtensionName}',
-    );
-    if (!File(corePath).existsSync()) {
-      stderr.writeln(
-        'Core not found after build hook: $corePath\n'
-        'Outputs reported: ${report.outputs.join(', ')}',
-      );
-      exit(1);
-    }
-    return [corePath];
-  }
-
-  static Future<List<String>> buildCore({
-    required Mode mode,
-    required Target target,
-    Arch? arch,
-  }) async {
-    final isLib = mode == Mode.lib;
-
-    final items = buildItems.where((element) {
-      return element.target == target &&
-          (arch == null ? true : element.arch == arch);
-    }).toList();
-
-    final List<String> corePaths = [];
-
-    final targetOutFilePath = pathJoin(outDir, target.name);
-    final targetOutFile = File(targetOutFilePath);
-    if (await targetOutFile.exists()) {
-      await targetOutFile.delete(recursive: true);
-      await Directory(targetOutFilePath).create(recursive: true);
-    }
-    for (final item in items) {
-      final outFilePath = pathJoin(targetOutFilePath, item.archName ?? '');
-      final file = File(outFilePath);
-      if (file.existsSync()) {
-        file.deleteSync(recursive: true);
-      }
-
-      final fileName = isLib
-          ? '$libName${item.target.dynamicLibExtensionName}'
-          : '$coreName${item.target.executableExtensionName}';
-      final realOutPath = pathJoin(outFilePath, fileName);
-      corePaths.add(realOutPath);
-
-      final Map<String, String> env = {};
-      env['GOOS'] = item.target.os;
-      if (item.arch != null) {
-        env['GOARCH'] = item.arch!.name;
-      }
-      if (isLib) {
-        env['CGO_ENABLED'] = '1';
-        env['CC'] = _getCc(item);
-        env['CFLAGS'] = '-O3 -Werror';
-      } else {
-        env['CGO_ENABLED'] = '0';
-      }
-      final execLines = [
-        'go',
-        'build',
-        '-ldflags=-w -s',
-        '-tags=$tags',
-        if (isLib) '-buildmode=c-shared',
-        '-o',
-        realOutPath,
-      ];
-      await exec(
-        execLines,
-        name: 'build core',
-        environment: env,
-        workingDirectory: _coreDir,
-      );
-      if (isLib && item.archName != null) {
-        await adjustLibOut(
-          targetOutFilePath: targetOutFilePath,
-          outFilePath: outFilePath,
-          archName: item.archName!,
-        );
-      }
-    }
-
-    return corePaths;
-  }
-
-  static Future<void> adjustLibOut({
-    required String targetOutFilePath,
-    required String outFilePath,
-    required String archName,
-  }) async {
-    final includesPath = pathJoin(targetOutFilePath, 'includes');
-    final realOutPath = pathJoin(includesPath, archName);
-    await Directory(realOutPath).create(recursive: true);
-    final targetOutFiles = Directory(outFilePath).listSync();
-    final coreFiles = Directory(_coreDir).listSync();
-    for (final file in [...targetOutFiles, ...coreFiles]) {
-      if (!file.path.endsWith('.h')) {
-        continue;
-      }
-      final targetFilePath = pathJoin(realOutPath, pathBasename(file.path));
-      final realFile = File(file.path);
-      await realFile.copy(targetFilePath);
-      if (coreFiles.contains(file)) {
-        continue;
-      }
-      await realFile.delete();
-    }
-  }
-
-  static Future<void> buildHelper(Target target, String token) async {
-    await exec(
-      ['cargo', 'build', '--release', '--features', 'windows-service'],
-      environment: {'TOKEN': token},
-      name: 'build helper',
-      workingDirectory: _servicesDir,
-    );
-    final outPath = pathJoin(
-      _servicesDir,
-      'target',
-      'release',
-      'helper${target.executableExtensionName}',
-    );
-    final targetPath = pathJoin(
-      outDir,
-      target.name,
-      '$_helperName${target.executableExtensionName}',
-    );
-    await File(outPath).copy(targetPath);
   }
 
   static List<String> getExecutable(String command) {
@@ -845,7 +660,6 @@ class Build {
 class BuildCommand {
   Target target;
   String? archArg;
-  String? outArg;
   String? envArg;
   String? targetsArg;
   bool verbose;
@@ -853,7 +667,6 @@ class BuildCommand {
   BuildCommand({
     required this.target,
     this.archArg,
-    this.outArg,
     this.envArg,
     this.targetsArg,
     this.verbose = false,
@@ -866,11 +679,9 @@ class BuildCommand {
       .map((e) => e.arch!)
       .toList();
 
-  Future<void> _buildEnvFile(String env, {String? coreSha256, String? androidArch}) async {
+  Future<void> _buildEnvFile(String env) async {
     final data = {
       'APP_ENV': env,
-      'CORE_SHA256': ?coreSha256,
-      'ANDROID_ARCH': ?androidArch,
     };
     final envFile = File(pathJoin(_current, 'env.json'))..create();
     await envFile.writeAsString(json.encode(data));
@@ -934,8 +745,6 @@ class BuildCommand {
   }
 
   Future<void> run() async {
-    final mode = target == Target.android ? Mode.lib : Mode.core;
-    final String out = outArg ?? (target.same ? 'app' : 'core');
     final env = envArg ?? 'pre';
 
     // 说明：0.8.93 时代的构建脚本(plugins/setup/buildkit/*.sh)已随 Dart build hook
@@ -971,26 +780,9 @@ class BuildCommand {
       }
     }
 
-    // 过渡桥：桌面平台改用 setup_hooks 的构建器（指纹缓存 + manifest）；
-    // Android 仍走内联 go build（lib 模式还需 NDK 工具链，留到 B 阶段）。
-    final viaHooks = target != Target.android;
-    final corePaths = viaHooks
-        ? await Build.buildCoreWithHooks(target: target, arch: arch!)
-        : await Build.buildCore(target: target, arch: arch, mode: mode);
-
-    String? coreSha256;
-
-    if (Platform.isWindows && target == Target.windows) {
-      coreSha256 = await Build.calcSha256(corePaths.first);
-      // 走 hook 时 helper 已由 hook 用同一个 SHA 构建，重复构建会引入第二个 SHA 源。
-      if (!viaHooks) {
-        await Build.buildHelper(target, coreSha256);
-      }
-    }
-    await _buildEnvFile(env, coreSha256: coreSha256, androidArch: arch?.name);
-    if (out != 'app') {
-      return;
-    }
+    // Core 与 helper 由 Dart build hook（plugins/setup）在 flutter build 期间构建；
+    // 这里只负责写 env.json，然后交给 flutter_distributor 打包。
+    await _buildEnvFile(env);
 
     switch (target) {
       case Target.windows:
@@ -1103,7 +895,6 @@ Future<void> main(List<String> args) async {
   }
 
   String? archValue;
-  String? outValue;
   String? envValue;
   String? targetsValue;
   bool verbose = false;
@@ -1112,9 +903,6 @@ Future<void> main(List<String> args) async {
     switch (args[i]) {
       case '--arch':
         archValue = args[++i];
-        break;
-      case '--out':
-        outValue = args[++i];
         break;
       case '--env':
         envValue = args[++i];
@@ -1128,11 +916,21 @@ Future<void> main(List<String> args) async {
         break;
     }
   }
-
+  // 构建钩子建 core/helper 是异步 Native Assets 构建，而 --dart-define 是编译期常量：
+  // 被关掉 build_assets 的包必须在这里拦住，否则会静默产出一个没有 core 的安装包。
+  final skipped = packagesNotBuildingAssets(
+    File(pathJoin(Directory.current.path, 'pubspec.yaml')).readAsStringSync(),
+  );
+  if (skipped.isNotEmpty) {
+    stderr.writeln(
+      'These packages do not build assets: ${skipped.join(', ')}. '
+      'Their build hooks are no-ops, so core/helper would be missing.',
+    );
+    exit(1);
+  }
   final command = BuildCommand(
     target: target,
     archArg: archValue,
-    outArg: outValue,
     envArg: envValue,
     targetsArg: targetsValue,
     verbose: verbose,

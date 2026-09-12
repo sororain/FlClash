@@ -8,9 +8,9 @@ environment:
 hooks:
   user_defines:
     setup:
-      # 暂时保持 false：桌面端仍读编译期 --dart-define 的 CORE_SHA256，
-      # 只有等 v6 桌面栈改读 manifest.json 之后才能打开（见 AGENTS.md）。
-      build_assets: false
+      # core/helper 由本 hook 在 flutter build 期间构建。应用侧不再需要编译期
+      # --dart-define 的 CORE_SHA256：helper 与 app 都在运行期读 Core 旁的 manifest.json。
+      build_assets: true
     rust_api:
       # rust_api 已改为 build-hook(Native Assets)构建，无平台目录，无需时序配合。
       build_assets: true
@@ -89,9 +89,6 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  # setup.dart 的过渡桥需要直接调用构建器（仅构建脚本使用，不进应用）
-  setup_hooks:
-    path: plugins/setup/setup_hooks
   flutter_lints: ^6.0.0
   json_serializable: ^6.8.0
   build_runner: ^2.14.1
