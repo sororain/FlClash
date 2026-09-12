@@ -57,23 +57,35 @@ tables (`drift_dev`).
 
 ### Testing
 
-Tests use `package:test/test.dart` for pure Dart logic (common utils, models) and `flutter_test` for provider/widget tests.
-`mocktail` is the mocking framework.
+Tests use `flutter_test`; `mocktail` is the mocking framework when mocks are needed.
 
 ```bash
-flutter test test/models/      # Model serialization & extension round-trip tests
-flutter test test/core/        # CoreController tests (mocked CoreHandlerInterface)
-flutter test test/providers/   # Riverpod provider tests (config & app state notifiers)
-flutter test test/common/      # Utility function tests (utils, string, iterable, fixed, etc.)
-flutter test test/database/    # Database type converter tests
-flutter test test/widgets/     # Widget-level rendering/interaction tests
-flutter test test/setup_test.dart
-flutter test plugins/proxy/test/proxy_test.dart  # Dart tests for bundled plugin packages
+flutter test                      # Root package tests (currently test/core/desktop/, 31 tests)
+flutter test test/core/desktop/   # Desktop core stack only
+dart analyze lib                  # Baseline: 0 error / 0 warning / ~229 info (lints only)
 ```
 
 Root `flutter test` only discovers the root package's `test/` directory by default. Include bundled plugin Dart tests by
 passing their paths explicitly, or run `flutter test` from that plugin package directory. Native plugin tests under
 platform folders (for example Windows C++ tests) are not run by `flutter test`.
+
+**当前实际布局（2026-09-12 核实）**：根包只有 `test/core/desktop/` 三个文件 —— `helper_client_test.dart`（Helper 协议语义：ping 双校验、start 回显与失败码、stop 组合约束）、`launcher_test.dart`（Helper/直连的选择与回退策略）、`manager_test.dart`（`DesktopCoreManager` 状态机）。历史文档里写过的 `test/models`、`test/providers`、`test/common`、`test/database`、`test/widgets`、`test/setup_test.dart` 在本仓库中**并不存在**，不要按那些路径去跑测试。
+
+**Mocking `CoreHandlerInterface`:** Use `CoreController.test(mock)` to inject a mock interface. Call
+`CoreController.resetInstance()` in `tearDown` to clean up the singleton between tests. Remember to
+`registerFallbackValue()` for freezed params used with `any()` matchers.
+
+**Provider tests:** Use `ProviderContainer` directly (no widget tree needed for simple notifiers). The Riverpod
+generated `update()` method takes a callback: `notifier.update((state) => newValue)`.
+
+**Model round-trip tests:** Always go through `jsonEncode`/`jsonDecode` when testing freezed models with
+nested objects — `toJson()` stores child objects directly (not as maps), so direct `fromJson(toJson())`
+fails for nested freezed types.
+
+**桌面栈测试的坑**：`DesktopCoreManager` 的状态流是 broadcast Stream，事件**异步派发**；断言状态序列前必须先
+`await Future<void>.delayed(Duration.zero)`，否则只会看到第一个事件。另外用伪 HTTP 适配器给 `HelperClient` 造响应时
+必须尊重真实编码 —— `/ping` 返回 `text/plain`，若标成 `application/json`，dio 会把 helper 路径当 JSON 解析并抛
+`FormatException`，表现为 `notReady` 而掩盖真实原因。
 
 **Mocking `CoreHandlerInterface`:** Use `CoreController.test(mock)` to inject a mock interface. Call
 `CoreController.resetInstance()` in `tearDown` to clean up the singleton between tests. Remember to
