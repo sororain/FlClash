@@ -33,9 +33,30 @@ begin
   end;
 end;
 
-function InitializeSetup(): Boolean;
+procedure UnregisterHelperService;
+var
+  ResultCode: Integer;
+begin
+  // 删除 SCM 里的服务注册;服务不存在时返回 1060,无害忽略
+  Exec('sc', 'delete SororainHelperService', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+end;
+
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+begin
+  // 与上游 0.8.97 对齐:破坏性动作放在用户确认安装之后、拷贝文件之前。
+  // 不能放 InitializeSetup——它在向导出现之前执行,用户双击安装包后又点
+  // 取消也会白杀进程+删注册;静默/自动更新同样会走到 PrepareToInstall,
+  // 覆盖不丢。app 首次需要 helper 时会按需重建,registerService 自愈
+  UnregisterHelperService;
+  KillProcesses;
+  Result := '';
+end;
+
+function InitializeUninstall(): Boolean;
 begin
   KillProcesses;
+  // 卸载时 app 已死,无人清理服务注册;不删会残留指向已删除路径的僵尸服务项
+  UnregisterHelperService;
   Result := True;
 end;
 
