@@ -38,6 +38,62 @@ static LOGS: Lazy<Arc<Mutex<VecDeque<String>>>> =
 static PROCESS: Lazy<Arc<Mutex<Option<std::process::Child>>>> =
     Lazy::new(|| Arc::new(Mutex::new(None)));
 
+/// Windows 没有 cgroup 可以随 helper 一起带走 Core，于是把 Core 放进一个 job：
+/// helper 进程消失（崩溃/被卸载/被强杀）时由内核把它一起收掉，避免留下无人管理的
+/// Core 以及它挂上的 sing-tun 路由。
+#[cfg(windows)]
+struct CoreJob(isize);
+
+#[cfg(windows)]
+impl CoreJob {
+    fn bind(child: &std::process::Child) -> io::Result<Self> {
+        use std::os::windows::io::AsRawHandle;
+        use windows_sys::Win32::System::JobObjects::{
+            AssignProcessToJobObject, CreateJobObjectW, JobObjectExtendedLimitInformation,
+            SetInformationJobObject, JOBOBJECT_EXTENDED_LIMIT_INFORMATION,
+            JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
+        };
+
+        // SAFETY: 只调用 kernel32，句柄归本进程所有；job 句柄由 Drop 关闭，
+        // 进程句柄仍归 child。
+        unsafe {
+            let job = CreateJobObjectW(std::ptr::null(), std::ptr::null());
+            if job.is_null() {
+                return Err(io::Error::last_os_error());
+            }
+            let job = Self(job as isize);
+            let mut limits: JOBOBJECT_EXTENDED_LIMIT_INFORMATION = std::mem::zeroed();
+            limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+            if SetInformationJobObject(
+                job.0 as _,
+                JobObjectExtendedLimitInformation,
+                &limits as *const _ as *const _,
+                std::mem::size_of::<JOBOBJECT_EXTENDED_LIMIT_INFORMATION>() as u32,
+            ) == 0
+            {
+                return Err(io::Error::last_os_error());
+            }
+            if AssignProcessToJobObject(job.0 as _, child.as_raw_handle() as _) == 0 {
+                return Err(io::Error::last_os_error());
+            }
+            Ok(job)
+        }
+    }
+}
+
+#[cfg(windows)]
+impl Drop for CoreJob {
+    fn drop(&mut self) {
+        // SAFETY: 句柄来自 CreateJobObjectW，只关闭一次。
+        unsafe {
+            windows_sys::Win32::Foundation::CloseHandle(self.0 as _);
+        }
+    }
+}
+
+#[cfg(windows)]
+static JOB: Lazy<Arc<Mutex<Option<CoreJob>>>> = Lazy::new(|| Arc::new(Mutex::new(None)));
+
 fn start(start_params: StartParams) -> impl Reply {
     if !cfg!(debug_assertions) {
         let sha256 = sha256_file(start_params.path.as_str()).unwrap_or("".to_string());
@@ -54,6 +110,17 @@ fn start(start_params: StartParams) -> impl Reply {
     {
         Ok(child) => {
             *process = Some(child);
+            #[cfg(windows)]
+            {
+                // 绑定失败不阻断启动（例如进程已在别的 job 里）：只是失去
+                // “helper 崩溃时内核回收 Core”这层保护，记日志即可。
+                match CoreJob::bind(process.as_ref().unwrap()) {
+                    Ok(job) => *JOB.lock().unwrap() = Some(job),
+                    Err(error) => log_message(format!(
+                        "Failed to bind the Core to a job object: {error}"
+                    )),
+                }
+            }
             if let Some(ref mut child) = *process {
                 let stderr = child.stderr.take().unwrap();
                 let reader = io::BufReader::new(stderr);
@@ -86,6 +153,11 @@ fn stop() -> impl Reply {
         let _ = child.wait();
     }
     *process = None;
+    #[cfg(windows)]
+    {
+        // 丢掉 job 句柄（KILL_ON_JOB_CLOSE 也会顺带收掉可能残留的 Core）。
+        *JOB.lock().unwrap() = None;
+    }
     "".to_string()
 }
 
