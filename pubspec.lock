@@ -1755,9 +1755,11 @@ packages:
     dependency: "direct main"
     description:
       path: "packages/tray_manager"
-      relative: true
-    source: path
-    version: "0.5.2"
+      ref: main
+      resolved-ref: da2d83dd1cc3c9709bf708ff827ad9072504ce52
+      url: "https://github.com/chen08209/tray_manager.git"
+    source: git
+    version: "0.5.3"
   typed_data:
     dependency: transitive
     description:
