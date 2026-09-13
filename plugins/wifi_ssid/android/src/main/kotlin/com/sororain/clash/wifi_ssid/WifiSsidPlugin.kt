@@ -1,4 +1,4 @@
-package com.follow.clash.wifi_ssid
+﻿package com.sororain.clash.wifi_ssid
 
 import android.Manifest
 import android.app.Activity
