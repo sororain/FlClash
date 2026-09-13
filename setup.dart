@@ -769,8 +769,8 @@ class Build {
     return command.split(' ');
   }
 
-  /// flutter_distributor 不随仓库分发（对齐上游 0.8.97）：先幂等激活一次，再统一以
-  /// `dart pub global run` 调用，避免本机必须把 pub 的全局 bin 目录加进 PATH。
+  /// flutter_distributor 不随仓库分发：先幂等激活一次，再统一以 `dart pub global run`
+  /// 调用，避免本机必须把 pub 的全局 bin 目录加进 PATH。
   static Future<void> getDistributor() async {
     await exec(
       name: 'activate flutter_distributor',
