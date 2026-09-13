@@ -1,4 +1,4 @@
-﻿name: wifi_ssid
+name: wifi_ssid
 description: A Flutter plugin to retrieve the current Wi-Fi SSID.
 version: 0.0.1
 

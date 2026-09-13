@@ -1,4 +1,4 @@
-﻿# buildkit.cmake — Build Go core as part of the native Linux/Windows build
+# buildkit.cmake — Build Go core as part of the native Linux/Windows build
 #
 # Include this from a plugin's CMakeLists.txt and call:
 #   apply_buildkit()
