@@ -3,7 +3,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-
 String get _current => Directory.current.path;
 
 String pathJoin(String p1, String p2, [String? p3, String? p4, String? p5]) {
