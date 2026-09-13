@@ -8,6 +8,7 @@ import 'package:sororain/enum/enum.dart';
 import 'package:sororain/models/core.dart';
 
 import 'interface.dart';
+import 'lease.dart';
 import 'transport.dart';
 
 class CoreService extends CoreHandlerInterface {
@@ -20,7 +21,9 @@ class CoreService extends CoreHandlerInterface {
 
   final Map<String, Completer> _callbackCompleterMap = {};
 
-  Process? _process;
+  /// Lease owning the directly-spawned core process (null when the core was
+  /// started by the helper, or when nothing is running).
+  CoreProcessLease? _lease;
 
   factory CoreService() {
     _instance ??= CoreService._internal();
@@ -104,7 +107,7 @@ class CoreService extends CoreHandlerInterface {
   }
 
   Future<void> start() async {
-    if (_process != null) {
+    if (_lease != null) {
       await shutdown(false);
     }
     // Wait for the transport server to be ready before getting the address
@@ -118,8 +121,9 @@ class CoreService extends CoreHandlerInterface {
         return;
       }
     }
+    final Process process;
     try {
-      _process = await Process.start(appPath.corePath, [coreAddress]);
+      process = await Process.start(appPath.corePath, [coreAddress]);
     } catch (e) {
       commonPrint.log(
         'Failed to start core process: $e',
@@ -128,13 +132,14 @@ class CoreService extends CoreHandlerInterface {
       _handleInvokeCrashEvent();
       return;
     }
-    _process?.stdout.listen((_) {});
-    _process?.stderr.listen((e) {
+    process.stdout.listen((_) {});
+    process.stderr.listen((e) {
       final error = utf8.decode(e);
       if (error.isNotEmpty) {
         commonPrint.log(error, logLevel: LogLevel.warning);
       }
     });
+    _lease = DirectCoreLease(process: process);
     await _transport.connectionCompleter.future;
   }
 
@@ -157,8 +162,19 @@ class CoreService extends CoreHandlerInterface {
       await request.stopCoreByHelper();
     }
     _transport.disconnected();
-    _process?.kill();
-    _process = null;
+    // Idempotent, exit-confirming stop: repeated calls reuse the in-flight
+    // operation, and a graceful kill is waited on for up to 5 seconds.
+    final lease = _lease;
+    if (lease != null) {
+      final result = await lease.stop(const Duration(seconds: 5));
+      if (!result.exitConfirmed) {
+        commonPrint.log(
+          'Core process (pid ${lease.pid}) did not exit in time',
+          logLevel: LogLevel.warning,
+        );
+      }
+      _lease = null;
+    }
     _clearCompleter();
     if (isUser) {
       return _shutdownCompleter.future;

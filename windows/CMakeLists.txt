@@ -90,6 +90,11 @@ install(PROGRAMS "${CLASH_DIR}/SororainCore.exe" DESTINATION "${INSTALL_BUNDLE_L
 install(PROGRAMS "${CLASH_DIR}/SororainHelperService.exe" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime OPTIONAL)
 
+# Core SHA256 manifest written by build_tool; read by the desktop runtime
+# to locate the expected core hash for helper verification.
+install(FILES "${CLASH_DIR}/manifest.json" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+  COMPONENT Runtime OPTIONAL)
+
 install(FILES "EnableLoopback.exe" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime)
 

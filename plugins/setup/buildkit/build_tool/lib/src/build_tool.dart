@@ -10,9 +10,9 @@ import 'error.dart';
 import 'go_builder.dart';
 import 'logging.dart';
 import 'options.dart';
+import 'util.dart';
 import 'rust_builder.dart';
 import 'target.dart';
-import 'util.dart';
 
 final _log = Logger('build_tool');
 
@@ -175,6 +175,20 @@ class BuildWindowsCommand extends BuildCommand {
       await File(p.join(_rootDir, 'core_sha256.json'))
           .writeAsString(jsonEncode({'CORE_SHA256': coreSha256}));
     }
+
+    // Manifest is written in both modes (debug uses an empty-token helper,
+    // but the runtime still wants a manifest to locate the core hash source).
+    // Mirrors 0.8.96's build_tool so the desktop runtime can read the
+    // expected core hash at run time.
+    writeCoreManifest(
+      path: p.join(
+        _rootDir,
+        config.outputDir,
+        targets.first.platformDir,
+        coreManifestName,
+      ),
+      coreSha256: debug ? '0' * 64 : await calcSha256(corePaths.first),
+    );
 
     _log.info('Build complete: $corePaths');
   }
