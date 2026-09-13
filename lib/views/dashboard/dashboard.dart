@@ -16,6 +16,9 @@ import 'widgets/start_button.dart';
 
 typedef _IsEditWidgetBuilder = Widget Function(bool isEdit);
 
+const _maxCrossAxisCount = 16;
+const _maxGridWidth = 280.0 * _maxCrossAxisCount / 4;
+
 class DashboardView extends ConsumerStatefulWidget {
   const DashboardView({super.key});
 
@@ -269,7 +272,6 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   @override
   Widget build(BuildContext context) {
     final dashboardState = ref.watch(dashboardStateProvider);
-    final columns = max(4 * ((dashboardState.contentWidth / 280).ceil()), 8);
     final spacing = 14.mAp;
     final children = [
       ...dashboardState.dashboardWidgets
@@ -297,39 +299,53 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
           alignment: Alignment.topCenter,
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16).copyWith(bottom: 88),
-            child: isEdit
-                ? SystemBackBlock(
-                    child: CommonPopScope(
-                      child: SuperGrid(
-                        key: key,
-                        crossAxisCount: columns,
-                        crossAxisSpacing: spacing,
-                        mainAxisSpacing: spacing,
-                        children: [
-                          ...dashboardState.dashboardWidgets
-                              .where(
-                                (item) => item.platforms.contains(
-                                  SupportPlatform.currentPlatform,
-                                ),
-                              )
-                              .map((item) => item.widget),
-                        ],
-                        onUpdate: () {
-                          _handleSave();
-                        },
-                      ),
-                      onPop: (context) {
-                        _handleUpdateIsEdit();
-                        return false;
-                      },
-                    ),
-                  )
-                : Grid(
-                    crossAxisCount: columns,
-                    crossAxisSpacing: spacing,
-                    mainAxisSpacing: spacing,
-                    children: children,
-                  ),
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: _maxGridWidth),
+                child: LayoutBuilder(
+                  builder: (_, constraints) {
+                    final columns = min(
+                      max(4 * ((constraints.maxWidth / 280).ceil()), 8),
+                      _maxCrossAxisCount,
+                    );
+                    return isEdit
+                        ? SystemBackBlock(
+                            child: CommonPopScope(
+                              child: SuperGrid(
+                                key: key,
+                                crossAxisCount: columns,
+                                crossAxisSpacing: spacing,
+                                mainAxisSpacing: spacing,
+                                children: [
+                                  ...dashboardState.dashboardWidgets
+                                      .where(
+                                        (item) => item.platforms.contains(
+                                          SupportPlatform.currentPlatform,
+                                        ),
+                                      )
+                                      .map((item) => item.widget),
+                                ],
+                                onUpdate: () {
+                                  _handleSave();
+                                },
+                              ),
+                              onPop: (context) {
+                                _handleUpdateIsEdit();
+                                return false;
+                              },
+                            ),
+                          )
+                        : Grid(
+                            crossAxisCount: columns,
+                            crossAxisSpacing: spacing,
+                            mainAxisSpacing: spacing,
+                            children: children,
+                          );
+                  },
+                ),
+              ),
+            ),
           ),
         ),
       ),
