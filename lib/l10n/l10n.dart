@@ -1784,6 +1784,46 @@ class AppLocalizations {
     return Intl.message('Geoip code', name: 'geoipCode', desc: '', args: []);
   }
 
+  /// `Geo Resources`
+  String get geoResources {
+    return Intl.message(
+      'Geo Resources',
+      name: 'geoResources',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Updating {name}...`
+  String geoUpdating(Object name) {
+    return Intl.message(
+      'Updating $name...',
+      name: 'geoUpdating',
+      desc: '',
+      args: [name],
+    );
+  }
+
+  /// `{name} is already up to date`
+  String geoSkipped(Object name) {
+    return Intl.message(
+      '$name is already up to date',
+      name: 'geoSkipped',
+      desc: '',
+      args: [name],
+    );
+  }
+
+  /// `{name} updated`
+  String geoUpdated(Object name) {
+    return Intl.message(
+      '$name updated',
+      name: 'geoUpdated',
+      desc: '',
+      args: [name],
+    );
+  }
+
   /// `Ipcidr`
   String get ipcidr {
     return Intl.message('Ipcidr', name: 'ipcidr', desc: '', args: []);

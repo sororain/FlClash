@@ -1,5 +1,5 @@
 import 'package:sororain/common/app_localizations.dart';
-import 'package:sororain/core/controller.dart';
+import 'package:sororain/enum/enum.dart';
 import 'package:sororain/plugins/app.dart';
 import 'package:sororain/plugins/tile.dart';
 import 'package:sororain/providers/providers.dart';
@@ -25,7 +25,7 @@ class _TileContainerState extends ConsumerState<TileManager> with TileListener {
 
   @override
   Future<void> onStart() async {
-    if (isStart && coreController.isCompleted) {
+    if (isStart && ref.read(coreStatusProvider) == CoreStatus.connected) {
       return;
     }
     ref.read(setupActionProvider.notifier).updateStatus(true);

@@ -1,8 +1,5 @@
-import 'dart:async';
-
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:sororain/common/common.dart';
-import 'package:sororain/core/core.dart';
 import 'package:sororain/l10n/l10n.dart';
 import 'package:sororain/manager/hotkey_manager.dart';
 import 'package:sororain/manager/manager.dart';
@@ -183,11 +180,10 @@ class ApplicationState extends ConsumerState<Application> {
   }
 
   @override
-  Future<void> dispose() async {
+  void dispose() {
     _appLifecycle.dispose();
     linkManager.destroy();
-    await coreController.destroy();
-    await ref.read(systemActionProvider.notifier).handleExit();
+    ref.read(systemActionProvider.notifier).handleExit();
     super.dispose();
   }
 }

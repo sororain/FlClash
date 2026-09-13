@@ -73,10 +73,9 @@ class SetupAction extends _$SetupAction {
   Future<void> updateStatus(bool isStart, {bool isInit = false}) async {
     if (isStart) {
       if (!isInit) {
-        final res = await ref
-            .read(coreActionProvider.notifier)
-            .tryStartCore(true);
-        if (res) return;
+        if (ref.read(coreStatusProvider) == CoreStatus.disconnected) {
+          await ref.read(coreActionProvider.notifier).startCore();
+        }
         if (!ref.read(initProvider)) return;
         await handleStart();
         applyProfileDebounce(force: true, silence: true);
@@ -160,7 +159,7 @@ class SetupAction extends _$SetupAction {
   Future<void> applyProfile({
     bool silence = false,
     bool force = false,
-    VoidCallback? preloadInvoke,
+    Future<void> Function()? preloadInvoke,
   }) async {
     await _setupConfig(
       force: force,
@@ -263,7 +262,7 @@ class SetupAction extends _$SetupAction {
   Future<void> _setupConfig({
     bool force = false,
     bool silence = false,
-    VoidCallback? preloadInvoke,
+    Future<void> Function()? preloadInvoke,
     FutureOr Function()? onUpdated,
   }) async {
     var profile = ref.read(currentProfileProvider);
@@ -298,7 +297,6 @@ class SetupAction extends _$SetupAction {
         await File(configFilePath).safeWriteAsString(yamlString);
         globalState.lastConfigMd5 = yamlMd5;
         final message = await coreController.setupConfig(
-          setupState: setupState,
           params: _setupParams,
           preloadInvoke: preloadInvoke,
         );

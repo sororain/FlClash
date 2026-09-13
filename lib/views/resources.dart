@@ -196,9 +196,7 @@ class _GeoDataListItemState extends State<GeoDataListItem> {
   Future<void> updateGeoDateItem() async {
     isUpdating.value = true;
     try {
-      final message = await coreController.updateGeoData(
-        UpdateGeoDataParams(geoName: geoItem.fileName, geoType: geoItem.label),
-      );
+      final message = await coreController.updateGeoData(geoItem.label);
       if (message.isNotEmpty) throw message;
     } catch (e) {
       isUpdating.value = false;

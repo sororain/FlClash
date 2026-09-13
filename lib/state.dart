@@ -321,8 +321,7 @@ class GlobalState {
       window?.hide();
     }
     await _handleFailedPreference();
-    await container.read(coreActionProvider.notifier).connectCore();
-    await container.read(coreActionProvider.notifier).initCore();
+    await container.read(coreActionProvider.notifier).startCore();
     await container.read(setupActionProvider.notifier).initStatus();
     container.read(initProvider.notifier).value = true;
     permissions.check();

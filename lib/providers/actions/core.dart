@@ -2,6 +2,9 @@ part of '../action.dart';
 
 @Riverpod(keepAlive: true)
 class CoreAction extends _$CoreAction {
+  int _requestedRestartRevision = 0;
+  Future<void>? _restartOperation;
+
   @override
   void build() {}
 
@@ -17,60 +20,55 @@ class CoreAction extends _$CoreAction {
     }
   }
 
-  Future<void> connectCore() async {
+  Future<void> startCore() async {
     ref.read(coreStatusProvider.notifier).value = CoreStatus.connecting;
-    final result = await Future.wait([
-      coreController.preload(),
-      Future.delayed(const Duration(milliseconds: 300)),
-    ]);
-    final String message = result[0];
-    if (message.isNotEmpty) {
+    try {
+      await coreController.start();
+      ref.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+      await initCore();
+    } catch (error) {
       ref.read(coreStatusProvider.notifier).value = CoreStatus.disconnected;
-      globalState.showNotifier(message);
-      return;
+      globalState.showNotifier(error.toString());
     }
-    ref.read(coreStatusProvider.notifier).value = CoreStatus.connected;
   }
 
-  Future<Result<bool>> requestAdmin(bool enableTun) async {
-    final realTunEnable = ref.read(realTunEnableProvider);
-    if (enableTun != realTunEnable && realTunEnable == false) {
-      final code = await system.authorizeCore();
-      switch (code) {
-        case AuthorizeCode.success:
-          await restartCore();
-          return Result.error('');
-        case AuthorizeCode.none:
-          break;
-        case AuthorizeCode.error:
-          enableTun = false;
-          break;
+  Future<void> restartCore() {
+    _requestedRestartRevision++;
+    final activeOperation = _restartOperation;
+    if (activeOperation != null) {
+      return activeOperation;
+    }
+
+    final operation = _runRestartWorker();
+    _restartOperation = operation;
+    return operation;
+  }
+
+  Future<void> _runRestartWorker() async {
+    try {
+      ref.read(coreStatusProvider.notifier).value = CoreStatus.connecting;
+      await coreController.restart();
+      ref.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+      await initCore();
+
+      var appliedRevision = 0;
+      while (appliedRevision < _requestedRestartRevision) {
+        final revision = _requestedRestartRevision;
+        if (ref.read(isStartProvider)) {
+          await ref
+              .read(setupActionProvider.notifier)
+              .updateStatus(true, isInit: true);
+        } else {
+          await ref.read(setupActionProvider.notifier).applyProfile(force: true);
+        }
+        appliedRevision = revision;
       }
+    } catch (_) {
+      ref.read(coreStatusProvider.notifier).value = CoreStatus.disconnected;
+      rethrow;
+    } finally {
+      _restartOperation = null;
     }
-    ref.read(realTunEnableProvider.notifier).value = enableTun;
-    return Result.success(enableTun);
-  }
-
-  Future<void> restartCore([bool start = false]) async {
-    final isDisconnected =
-        ref.read(coreStatusProvider) == CoreStatus.disconnected;
-    ref.read(coreStatusProvider.notifier).value = CoreStatus.disconnected;
-    await coreController.shutdown(!isDisconnected);
-    await connectCore();
-    await initCore();
-    if (start || ref.read(isStartProvider)) {
-      await ref
-          .read(setupActionProvider.notifier)
-          .updateStatus(true, isInit: true);
-    } else {
-      await ref.read(setupActionProvider.notifier).applyProfile(force: true);
-    }
-  }
-
-  Future<bool> tryStartCore([bool start = false]) async {
-    if (coreController.isCompleted) return false;
-    await restartCore(start);
-    return true;
   }
 
   void handleCoreDisconnected() {

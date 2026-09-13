@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:sororain/common/common.dart';
 import 'package:sororain/core/controller.dart';
+import 'package:sororain/enum/enum.dart';
+import 'package:sororain/providers/app.dart';
 import 'package:sororain/state.dart';
 import 'package:sororain/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -34,7 +36,10 @@ class _MemoryInfoState extends State<MemoryInfo> {
   Future<void> _updateMemory() async {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final rss = ProcessInfo.currentRss;
-      if (coreController.isCompleted) {
+      final coreConnected =
+          globalState.container.read(coreStatusProvider) ==
+          CoreStatus.connected;
+      if (system.isDesktop && coreConnected) {
         _memoryStateNotifier.value = await coreController.getMemory() + rss;
       } else {
         _memoryStateNotifier.value = rss;

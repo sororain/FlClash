@@ -1,15 +1,23 @@
+﻿import 'dart:async';
+
 import 'package:sororain/common/common.dart';
 import 'package:sororain/core/core.dart';
 import 'package:sororain/enum/enum.dart';
 import 'package:sororain/models/models.dart';
-import 'package:sororain/providers/providers.dart';
+import 'package:sororain/providers/action.dart';
+import 'package:sororain/providers/app.dart';
+import 'package:sororain/providers/config.dart';
+import 'package:sororain/providers/state.dart';
+import 'package:sororain/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class CoreManager extends ConsumerStatefulWidget {
   final Widget child;
+  final CoreController controller;
 
-  const CoreManager({super.key, required this.child});
+  CoreManager({super.key, required this.child, CoreController? controller})
+    : controller = controller ?? coreController;
 
   @override
   ConsumerState<CoreManager> createState() => _CoreContainerState();
@@ -26,16 +34,13 @@ class _CoreContainerState extends ConsumerState<CoreManager>
   void initState() {
     super.initState();
     coreEventManager.addListener(this);
-    ref.listenManual(
-      currentProfileIdProvider,
-      (prev, next) {
-        if (prev != next) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            ref.read(setupActionProvider.notifier).fullSetup();
-          });
-        }
-      },
-    );
+    ref.listenManual(currentProfileIdProvider, (prev, next) {
+      if (prev != next) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref.read(setupActionProvider.notifier).fullSetup();
+        });
+      }
+    });
     ref.listenManual(updateParamsProvider, (prev, next) {
       if (prev != next) {
         ref.read(setupActionProvider.notifier).updateConfigDebounce();
@@ -46,15 +51,15 @@ class _CoreContainerState extends ConsumerState<CoreManager>
       next,
     ) {
       if (next) {
-        coreController.startLog();
+        widget.controller.startLog();
       } else {
-        coreController.stopLog();
+        widget.controller.stopLog();
       }
     }, fireImmediately: true);
   }
 
   @override
-  Future<void> dispose() async {
+  void dispose() {
     coreEventManager.removeListener(this);
     super.dispose();
   }
@@ -62,15 +67,19 @@ class _CoreContainerState extends ConsumerState<CoreManager>
   @override
   Future<void> onDelay(Delay delay) async {
     super.onDelay(delay);
-    ref.read(delayDataSourceProvider.notifier).setDelay(delay);
+    final proxiesAction = ref.read(proxiesActionProvider.notifier);
+    proxiesAction.setDelay(delay);
     debouncer.call(FunctionTag.updateDelay, () async {
-      ref.read(proxiesActionProvider.notifier).updateGroupsDebounce();
+      proxiesAction.updateGroupsDebounce();
     }, duration: const Duration(milliseconds: 5000));
   }
 
   @override
   void onLog(Log log) {
     ref.read(logsProvider.notifier).add(log);
+    if (log.logLevel == LogLevel.error) {
+      globalState.showNotifier(log.payload);
+    }
     super.onLog(log);
   }
 
@@ -82,9 +91,10 @@ class _CoreContainerState extends ConsumerState<CoreManager>
 
   @override
   Future<void> onLoaded(String providerName) async {
+    final ref = globalState.container;
     ref
         .read(providersProvider.notifier)
-        .setProvider(await coreController.getExternalProvider(providerName));
+        .setProvider(await widget.controller.getExternalProvider(providerName));
     debouncer.call(FunctionTag.loadedProvider, () async {
       ref.read(proxiesActionProvider.notifier).updateGroupsDebounce();
     }, duration: const Duration(milliseconds: 5000));
@@ -100,8 +110,25 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     if (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
       context.showNotifier(message);
     }
-    await coreController.shutdown(false);
     super.onCrash(message);
   }
-}
 
+  @override
+  void onGeoUpdate(String geoType, bool updating, bool skipped, String? error) {
+    final geoResource = GeoResource.fromJson(geoType.toLowerCase());
+    final key = geoResource.updatingKey;
+    final l10n = currentAppLocalizations;
+    if (updating) {
+      globalState.showNotifier(l10n.geoUpdating(geoResource.name));
+    } else if (skipped) {
+      globalState.showNotifier(l10n.geoSkipped(geoResource.name));
+    } else {
+      globalState.showNotifier(l10n.geoUpdated(geoResource.name));
+    }
+    ref.read(isUpdatingProvider(key).notifier).value = updating;
+    if (!updating && error != null && error.isNotEmpty) {
+      globalState.showNotifier(error);
+    }
+    super.onGeoUpdate(geoType, updating, skipped, error);
+  }
+}

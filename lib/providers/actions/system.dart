@@ -2,6 +2,8 @@ part of '../action.dart';
 
 @Riverpod(keepAlive: true)
 class SystemAction extends _$SystemAction {
+  SystemExitCoordinator? _exitCoordinator;
+
   @override
   void build() {}
 
@@ -16,23 +18,43 @@ class SystemAction extends _$SystemAction {
     return ref.read(packagesProvider);
   }
 
-  Future<void> handleExit([bool needSave = false]) async {
-    Future.delayed(const Duration(seconds: 3), () {
-      system.exit();
-    });
-    try {
-      await Future.wait([
-        if (needSave) preferences.saveConfig(ref.read(configProvider)),
-        if (macOS != null) macOS!.updateDns(true),
-        if (proxy != null) proxy!.stopProxy(),
-        if (tray != null) tray!.destroy(),
-      ]);
-      await window?.close();
-      await coreController.destroy();
-      commonPrint.log('exit');
-    } finally {
-      system.exit();
-    }
+  Future<void> handleExit([bool needSave = false]) {
+    final coordinator = _exitCoordinator ??= SystemExitCoordinator(
+      watchdogDuration: exitWatchdogDuration,
+      closeWindow: closeWindow,
+      closeCore: closeCore,
+      exitApplication: exitApplication,
+    );
+    return coordinator.exit(cleanup: () => cleanupExitResources(needSave));
+  }
+
+  @protected
+  Duration get exitWatchdogDuration => const Duration(seconds: 3);
+
+  @protected
+  Future<void> cleanupExitResources(bool needSave) async {
+    await Future.wait([
+      if (needSave) preferences.saveConfig(ref.read(configProvider)),
+      if (macOS != null) macOS!.updateDns(true),
+      if (proxy != null) proxy!.stopProxy(),
+      if (tray != null) tray!.destroy(),
+    ]);
+  }
+
+  @protected
+  Future<void> closeWindow() async {
+    await window?.close();
+  }
+
+  @protected
+  Future<void> closeCore() async {
+    await coreController.close();
+    commonPrint.log('exit');
+  }
+
+  @protected
+  Future<void> exitApplication() {
+    return system.exit();
   }
 
   Future<void> handleBackOrExit() async {
