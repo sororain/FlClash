@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
@@ -26,6 +26,9 @@ ProcessResult runCommand(
     workingDirectory: workingDirectory,
     environment: environment,
     includeParentEnvironment: includeParentEnvironment,
+    runInShell:
+        Platform.isWindows &&
+        (executable.endsWith('.cmd') || executable.endsWith('.bat')),
     stdoutEncoding: systemEncoding,
     stderrEncoding: systemEncoding,
   );
