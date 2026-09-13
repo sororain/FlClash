@@ -27,7 +27,7 @@ dependencies:
   app_links: ^7.0.0
   win32_registry: ^2.0.0
   tray_manager:
-    path: plugins/tray_manager/packages/tray_manager
+    path: packages/tray_manager
   wifi_ssid:
     path: plugins/wifi_ssid
   collection: ^1.19.1

@@ -1754,10 +1754,10 @@ packages:
   tray_manager:
     dependency: "direct main"
     description:
-      path: "plugins/tray_manager/packages/tray_manager"
+      path: "packages/tray_manager"
       relative: true
     source: path
-    version: "0.5.3"
+    version: "0.5.2"
   typed_data:
     dependency: transitive
     description:
