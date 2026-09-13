@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:logging/logging.dart';
 import 'package:path/path.dart' as p;
@@ -62,4 +62,16 @@ class BuildConfig {
       distDir: yaml['dist_dir'] as String? ?? _defaults.distDir,
     );
   }
+
+  Map<String, String> toFingerprintMap() => {
+        'tags': tags,
+        'go_ldflags': goLdflags,
+        'core_dir': coreDir,
+        'core_name': coreName,
+        'lib_name': libName,
+        'output_dir': outputDir,
+        'helper_dir': helperDir,
+        'helper_name': helperName,
+        'dist_dir': distDir,
+      };
 }

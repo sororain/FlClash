@@ -1,4 +1,4 @@
-class BuildException implements Exception {
+﻿class BuildException implements Exception {
   final String message;
 
   BuildException(this.message);

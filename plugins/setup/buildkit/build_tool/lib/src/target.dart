@@ -1,4 +1,4 @@
-import 'environment.dart';
+﻿import 'environment.dart';
 import 'error.dart';
 
 class Target {

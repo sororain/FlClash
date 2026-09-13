@@ -4,9 +4,7 @@ setlocal
 setlocal ENABLEDELAYEDEXPANSION
 
 SET BASEDIR=%~dp0
-
-REM Use PROJECT_DIR from Gradle env if set, otherwise fallback to current dir
-if "%PROJECT_DIR%"=="" SET PROJECT_DIR=%CD%
+if not defined PROJECT_DIR SET PROJECT_DIR=%CD%
 
 if not exist "%PROJECT_DIR%\pubspec.yaml" (
     echo Error: Could not find project root at "%PROJECT_DIR%"
@@ -25,12 +23,7 @@ if not exist "%BUILD_TOOL_TEMP_DIR%" (
 )
 cd /D "%BUILD_TOOL_TEMP_DIR%"
 
-REM Prefer dart from FLUTTER_ROOT, fallback to PATH
-if not "%FLUTTER_ROOT%"=="" (
-    SET DART=%FLUTTER_ROOT%\bin\cache\dart-sdk\bin\dart
-) else (
-    SET DART=dart
-)
+SET DART=%FLUTTER_ROOT%\bin\cache\dart-sdk\bin\dart
 
 set BUILD_TOOL_PKG_DIR_POSIX=%BUILD_TOOL_PKG_DIR:\=/%
 
