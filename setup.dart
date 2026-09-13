@@ -742,10 +742,13 @@ class Build {
     }
   }
 
-  static Future<void> buildHelper(Target target, String token) async {
+  static Future<void> buildHelper(Target target, String coreSha256) async {
     await exec(
       ['cargo', 'build', '--release', '--features', 'windows-service'],
-      environment: {'TOKEN': token},
+      environment: {
+        'CORE_SHA256': coreSha256,
+        'CORE_NAME': '$_coreName${target.executableExtensionName}',
+      },
       name: 'build helper',
       workingDirectory: _servicesDir,
     );
@@ -780,25 +783,6 @@ class Build {
         '--git-path packages/flutter_distributor',
       ),
     );
-  }
-
-  static void copyFile(String sourceFilePath, String destinationFilePath) {
-    final sourceFile = File(sourceFilePath);
-    if (!sourceFile.existsSync()) {
-      stderr.writeln('Source file not exists: $sourceFilePath');
-      exit(1);
-    }
-    final destinationFile = File(destinationFilePath);
-    final destinationDirectory = destinationFile.parent;
-    if (!destinationDirectory.existsSync()) {
-      destinationDirectory.createSync(recursive: true);
-    }
-    try {
-      sourceFile.copySync(destinationFilePath);
-      print('File copied successfully!');
-    } catch (e) {
-      print('Failed to copy file: $e');
-    }
   }
 }
 
@@ -880,7 +864,6 @@ class BuildCommand {
     required Target target,
     required String targets,
     String args = '',
-    required String env,
   }) async {
     await Build.getDistributor();
     final allFlutterArgs = verbose ? 'verbose,dart-define-from-file=env.json' : 'dart-define-from-file=env.json';
@@ -948,7 +931,6 @@ class BuildCommand {
           target: target,
           targets: targetsArg ?? 'exe,zip',
           args: ' --description $archName',
-          env: env,
         );
         return;
       case Target.linux:
@@ -965,7 +947,6 @@ class BuildCommand {
           targets: targets,
           args:
               ' --description $archName --build-target-platform $defaultTarget',
-          env: env,
         );
         return;
       case Target.android:
@@ -988,7 +969,6 @@ class BuildCommand {
           target: target,
           targets: targetsArg ?? 'dmg',
           args: ' --description $archName',
-          env: env,
         );
         return;
     }
