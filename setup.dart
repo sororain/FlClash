@@ -832,10 +832,9 @@ class BuildCommand {
       .map((e) => e.arch!)
       .toList();
 
-  Future<void> _buildEnvFile(String env, {String? coreSha256, String? androidArch}) async {
+  Future<void> _buildEnvFile(String env, {String? androidArch}) async {
     final data = {
       'APP_ENV': env,
-      'CORE_SHA256': ?coreSha256,
       'ANDROID_ARCH': ?androidArch,
     };
     final envFile = File(pathJoin(_current, 'env.json'))..create();
@@ -940,13 +939,11 @@ class BuildCommand {
     // Android 走内联 go build（lib 模式还需 NDK 工具链，留到 B 阶段）。
     final corePaths = await Build.buildCore(target: target, arch: arch, mode: mode);
 
-    String? coreSha256;
-
     if (Platform.isWindows && target == Target.windows) {
-      coreSha256 = await Build.calcSha256(corePaths.first);
+      final coreSha256 = await Build.calcSha256(corePaths.first);
       await Build.buildHelper(target, coreSha256);
     }
-    await _buildEnvFile(env, coreSha256: coreSha256, androidArch: arch?.name);
+    await _buildEnvFile(env, androidArch: arch?.name);
     if (out != 'app') {
       return;
     }
