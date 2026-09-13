@@ -1038,16 +1038,27 @@ Future<void> main(List<String> args) async {
   String? targetsValue;
   bool verbose = false;
 
+  const allowedEnvs = ['dev', 'pre', 'stable'];
+  const allowedArches = ['arm', 'arm64', 'amd64'];
+
   for (var i = 1; i < args.length; i++) {
     switch (args[i]) {
       case '--arch':
         archValue = args[++i];
+        if (!allowedArches.contains(archValue)) {
+          stderr.writeln('Invalid arch: $archValue. Allowed: ${allowedArches.join(', ')}');
+          exit(1);
+        }
         break;
       case '--out':
         outValue = args[++i];
         break;
       case '--env':
         envValue = args[++i];
+        if (!allowedEnvs.contains(envValue)) {
+          stderr.writeln('Invalid env: $envValue. Allowed: ${allowedEnvs.join(', ')}');
+          exit(1);
+        }
         break;
       case '--targets':
         targetsValue = args[++i];
@@ -1056,6 +1067,10 @@ Future<void> main(List<String> args) async {
       case '-v':
         verbose = true;
         break;
+      default:
+        stderr.writeln('Unknown option: ${args[i]}');
+        _showHelp();
+        exit(1);
     }
   }
 
