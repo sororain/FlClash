@@ -1,6 +1,28 @@
 import 'package:sororain/enum/enum.dart';
-import 'package:sororain/widgets/sheet.dart' show SheetType;
+import 'package:sororain/widgets/sheet.dart';
 import 'package:flutter/material.dart';
+
+class PageActivityScope extends InheritedWidget {
+  final bool isActive;
+
+  const PageActivityScope({
+    super.key,
+    required this.isActive,
+    required super.child,
+  });
+
+  static bool isActiveOf(BuildContext context) {
+    return context
+            .dependOnInheritedWidgetOfExactType<PageActivityScope>()
+            ?.isActive ??
+        true;
+  }
+
+  @override
+  bool updateShouldNotify(PageActivityScope oldWidget) {
+    return isActive != oldWidget.isActive;
+  }
+}
 
 class CommonScaffoldBackActionProvider extends InheritedWidget {
   final VoidCallback? backAction;
@@ -42,6 +64,42 @@ class CommonScaffoldFabExtendedProvider extends InheritedWidget {
       isExtended != oldWidget.isExtended;
 }
 
+class ItemPositionProvider extends InheritedWidget {
+  final ItemPosition position;
+
+  const ItemPositionProvider({
+    super.key,
+    required this.position,
+    required super.child,
+  });
+
+  static ItemPositionProvider? of(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<ItemPositionProvider>();
+  }
+
+  @override
+  bool updateShouldNotify(ItemPositionProvider oldWidget) =>
+      position != oldWidget.position;
+}
+
+class ProxyDecoratorProvider extends InheritedWidget {
+  final bool isProxyDecorator;
+
+  const ProxyDecoratorProvider({
+    super.key,
+    required this.isProxyDecorator,
+    required super.child,
+  });
+
+  static ProxyDecoratorProvider? of(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<ProxyDecoratorProvider>();
+  }
+
+  @override
+  bool updateShouldNotify(ProxyDecoratorProvider oldWidget) =>
+      isProxyDecorator != oldWidget.isProxyDecorator;
+}
+
 class SheetProvider<T> extends InheritedWidget {
   final SheetType type;
   final void Function([T? result])? nestedNavigatorPop;
@@ -75,42 +133,6 @@ class SheetProvider<T> extends InheritedWidget {
       nestedNavigatorPop != oldWidget.nestedNavigatorPop;
 }
 
-class ProxyDecoratorProvider extends InheritedWidget {
-  final bool isProxyDecorator;
-
-  const ProxyDecoratorProvider({
-    super.key,
-    required this.isProxyDecorator,
-    required super.child,
-  });
-
-  static ProxyDecoratorProvider? of(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<ProxyDecoratorProvider>();
-  }
-
-  @override
-  bool updateShouldNotify(ProxyDecoratorProvider oldWidget) =>
-      isProxyDecorator != oldWidget.isProxyDecorator;
-}
-
-class ItemPositionProvider extends InheritedWidget {
-  final ItemPosition position;
-
-  const ItemPositionProvider({
-    super.key,
-    required this.position,
-    required super.child,
-  });
-
-  static ItemPositionProvider? of(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<ItemPositionProvider>();
-  }
-
-  @override
-  bool updateShouldNotify(ItemPositionProvider oldWidget) =>
-      position != oldWidget.position;
-}
-
 class ProfileIdProvider extends InheritedWidget {
   final int profileId;
 
@@ -128,5 +150,3 @@ class ProfileIdProvider extends InheritedWidget {
   bool updateShouldNotify(ProfileIdProvider oldWidget) =>
       profileId != oldWidget.profileId;
 }
-
-
