@@ -177,11 +177,6 @@ Future<void> _syncNames() async {
     (pathJoin(_current, 'distribute_options.yaml'), [
       ("app_name: '$oldAppName'", "app_name: '$appName'"),
     ]),
-    // build_config.yaml
-    (pathJoin(_current, 'build_config.yaml'), [
-      ('core_name: $oldCoreName', 'core_name: $coreName'),
-      ('helper_name: $oldHelperName', 'helper_name: $helperName'),
-    ]),
     // inno_setup.iss
     (pathJoin(_current, 'windows', 'packaging', 'exe', 'inno_setup.iss'), [
       // 三个名字是一体的,成组替换
@@ -380,7 +375,6 @@ Future<void> _syncNames() async {
   final checks = <(String, List<String>)>[
     (pathJoin(_current, 'lib', 'common', 'constant.dart'), [appName, helperName]),
     (pathJoin(_current, 'lib', 'common', 'path.dart'), [coreName]),
-    (pathJoin(_current, 'build_config.yaml'), [coreName, helperName]),
     (
       pathJoin(pathJoin(_current, 'services', 'helper', 'src', 'service'), 'windows.rs'),
       [helperName],

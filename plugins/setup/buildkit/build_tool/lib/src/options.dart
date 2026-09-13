@@ -1,4 +1,5 @@
-﻿import 'dart:io';
+﻿import 'dart:convert';
+import 'dart:io';
 
 import 'package:logging/logging.dart';
 import 'package:path/path.dart' as p;
@@ -45,11 +46,10 @@ class BuildConfig {
     final configPath = p.join(rootDir, 'build_config.yaml');
     final file = File(configPath);
     if (!file.existsSync()) {
-      _log.fine('No build_config.yaml found, using defaults');
-      return _defaults;
+      return _fromAppConfig(rootDir);
     }
     final yaml = loadYaml(file.readAsStringSync()) as YamlMap?;
-    if (yaml == null) return _defaults;
+    if (yaml == null) return _fromAppConfig(rootDir);
     return BuildConfig(
       tags: yaml['tags'] as String? ?? _defaults.tags,
       goLdflags: yaml['go_ldflags'] as String? ?? _defaults.goLdflags,
@@ -60,6 +60,36 @@ class BuildConfig {
       helperDir: yaml['helper_dir'] as String? ?? _defaults.helperDir,
       helperName: yaml['helper_name'] as String? ?? _defaults.helperName,
       distDir: yaml['dist_dir'] as String? ?? _defaults.distDir,
+    );
+  }
+
+  static BuildConfig _fromAppConfig(String rootDir) {
+    var coreName = _defaults.coreName;
+    var helperName = _defaults.helperName;
+    try {
+      final appConfig = File(p.join(rootDir, 'app_config.json'));
+      if (appConfig.existsSync()) {
+        final value = jsonDecode(appConfig.readAsStringSync());
+        if (value is Map) {
+          final name = value['coreName'];
+          if (name is String && name.isNotEmpty) coreName = name;
+          final helper = value['helperName'];
+          if (helper is String && helper.isNotEmpty) helperName = helper;
+        }
+      }
+    } on Object {
+      _log.fine('app_config.json unreadable, using default names');
+    }
+    return BuildConfig(
+      tags: _defaults.tags,
+      goLdflags: _defaults.goLdflags,
+      coreDir: _defaults.coreDir,
+      coreName: coreName,
+      libName: _defaults.libName,
+      outputDir: _defaults.outputDir,
+      helperDir: _defaults.helperDir,
+      helperName: helperName,
+      distDir: _defaults.distDir,
     );
   }
 
