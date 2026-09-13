@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:ffi/ffi.dart';
 import 'package:sororain/common/common.dart';
+import 'package:sororain/core/desktop/helper_client.dart';
 import 'package:sororain/enum/enum.dart';
 import 'package:sororain/plugins/app.dart';
 import 'package:sororain/state.dart';
@@ -31,7 +32,7 @@ class System {
 
   bool get isLinux => Platform.isLinux;
 
-  Future<int> get version async {
+  Future<int> init() async {
     final deviceInfo = await DeviceInfoPlugin().deviceInfo;
     return switch (Platform.operatingSystem) {
       'macos' => (deviceInfo as MacOsDeviceInfo).majorVersion,
@@ -228,7 +229,9 @@ class Windows {
       return WindowsHelperServiceStatus.none;
     }
     final output = result.stdout.toString();
-    if (output.contains('RUNNING') && await request.pingHelper()) {
+    if (output.contains('RUNNING') &&
+        await windowsHelperClient.readiness() ==
+            WindowsHelperReadiness.ready) {
       return WindowsHelperServiceStatus.running;
     }
     return WindowsHelperServiceStatus.presence;

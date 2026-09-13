@@ -1,224 +1,109 @@
-import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
+﻿import 'dart:async';
 
-import 'package:sororain/common/common.dart';
-import 'package:sororain/core/core.dart';
+import 'package:sororain/common/constant.dart';
+import 'package:sororain/common/system.dart';
 import 'package:sororain/enum/enum.dart';
 import 'package:sororain/models/core.dart';
+import 'package:flutter/foundation.dart';
 
+import 'desktop/helper_client.dart';
+import 'desktop/launcher.dart';
+import 'desktop/lifecycle.dart';
+import 'desktop/model.dart';
+import 'desktop/rpc_client.dart';
+import 'desktop/transport.dart';
+import 'event.dart';
 import 'interface.dart';
-import 'lease.dart';
-import 'transport.dart';
+import 'method.dart';
 
 class CoreService extends CoreHandlerInterface {
   static CoreService? _instance;
 
-  late final IPCCoreTransport _transport;
-  final Completer<void> _initCompleter = Completer<void>();
-
-  Completer<bool> _shutdownCompleter = Completer();
-
-  final Map<String, Completer> _callbackCompleterMap = {};
-
-  /// Lease owning the directly-spawned core process (null when the core was
-  /// started by the helper, or when nothing is running).
-  CoreProcessLease? _lease;
+  final DesktopCoreLifecycleController _lifecycle;
+  final CoreRpcChannel _rpcClient;
+  late final StreamSubscription<DesktopCoreFailure> _crashSubscription;
+  Future<CoreLifecycleResult>? _closeOperation;
 
   factory CoreService() {
-    _instance ??= CoreService._internal();
-    return _instance!;
+    return _instance ??= CoreService._create();
   }
 
-  CoreService._internal() {
-    _transport = IPCCoreTransport(
-      address: system.isWindows ? windowsPipeName : unixSocketPath,
+  factory CoreService._create() {
+    final address = system.isWindows ? windowsPipeName : unixSocketPath;
+    final directLauncher = DirectCoreLauncher();
+
+    final lifecycle = DesktopCoreLifecycle(
+      transportFactory: () => IPCCoreTransport(address: address),
+      launcherResolver: WindowsHelperLauncherResolver(
+        isWindows: system.isWindows,
+        directLauncher: directLauncher,
+        helperLauncher: WindowsHelperLauncher(windowsHelperClient),
+        helperReady: () => windowsHelperClient.readiness(),
+      ),
+      verifyPeerPid: system.isWindows,
     );
-    _initServer().then((_) => _initCompleter.complete());
-  }
-
-  Future<void> handleResult(ActionResult result) async {
-    final completer = _callbackCompleterMap[result.id];
-    final data = await parasResult(result);
-    if (completer?.isCompleted == true) {
-      return;
-    }
-    completer?.complete(data);
-  }
-
-  Future<void> _initServer() async {
-    await _transport.init();
-
-    _transport.onDisconnect = () {
-      _handleInvokeCrashEvent();
-      if (!_shutdownCompleter.isCompleted) {
-        _shutdownCompleter.complete(true);
-      }
-    };
-
-    _transport.dataStream
-        .transform(uint8ListToListIntConverter)
-        .transform(utf8.decoder)
-        .listen(
-          (data) async {
-            try {
-              final dataJson =
-                  await data.trim().commonToJSON<dynamic>();
-              if (dataJson is Map &&
-                  dataJson['method'] == ActionMethod.message.name) {
-                // 0.8.96 core batches events into one message call
-                final arguments = dataJson['arguments'];
-                if (arguments is List) {
-                  for (final message in arguments) {
-                    coreEventManager.sendEvent(
-                      CoreEvent.fromJson(
-                        Map<String, dynamic>.from(message as Map),
-                      ),
-                    );
-                  }
-                }
-                return;
-              }
-              handleResult(
-                actionResultFromWireJson(
-                  Map<String, dynamic>.from(dataJson as Map),
-                ),
-              );
-            } catch (e) {
-              commonPrint.log(
-                'Failed to parse transport data: $e',
-                logLevel: LogLevel.error,
-              );
-            }
-          },
-          onError: (error) {
-            commonPrint.log(
-              'Transport data stream error: $error',
-              logLevel: LogLevel.error,
-            );
-          },
-        );
-  }
-
-  void _handleInvokeCrashEvent() {
-    coreEventManager.sendEvent(
-      const CoreEvent(type: CoreEventType.crash, data: 'core done'),
+    return CoreService._(
+      lifecycle: lifecycle,
+      rpcClient: CoreRpcClient(lifecycle.transport),
     );
   }
 
-  Future<void> start() async {
-    if (_lease != null) {
-      await shutdown(false);
-    }
-    // Wait for the transport server to be ready before getting the address
-    await _initCompleter.future;
-    // Use the actual bound address (for Windows TCP, this includes the port)
-    final coreAddress = _transport.bindAddress;
-    if (system.isWindows && await system.checkIsAdmin()) {
-      final isSuccess = await request.startCoreByHelper(coreAddress);
-      if (isSuccess) {
-        await _transport.connectionCompleter.future;
-        return;
-      }
-    }
-    final Process process;
-    try {
-      process = await Process.start(appPath.corePath, [coreAddress]);
-    } catch (e) {
-      commonPrint.log(
-        'Failed to start core process: $e',
-        logLevel: LogLevel.error,
+  @visibleForTesting
+  CoreService.forTesting({
+    required DesktopCoreLifecycleController lifecycle,
+    required CoreRpcChannel rpcClient,
+  }) : this._(lifecycle: lifecycle, rpcClient: rpcClient);
+
+  CoreService._({
+    required DesktopCoreLifecycleController lifecycle,
+    required CoreRpcChannel rpcClient,
+  }) : _lifecycle = lifecycle,
+       _rpcClient = rpcClient {
+    _crashSubscription = _lifecycle.crashEvents.listen((failure) {
+      coreEventManager.sendEvent(
+        CoreEvent(
+          type: CoreEventType.crash,
+          data: failure.cause?.toString() ?? 'core done',
+        ),
       );
-      _handleInvokeCrashEvent();
-      return;
-    }
-    process.stdout.listen((_) {});
-    process.stderr.listen((e) {
-      final error = utf8.decode(e);
-      if (error.isNotEmpty) {
-        commonPrint.log(error, logLevel: LogLevel.warning);
-      }
     });
-    _lease = DirectCoreLease(process: process);
-    await _transport.connectionCompleter.future;
   }
 
   @override
-  FutureOr<bool> destroy() async {
-    await shutdown(false);
-    await _transport.close();
-    return true;
-  }
-
-  Future<void> sendMessage(String message) async {
-    await _transport.connectionCompleter.future;
-    _transport.send(message);
-  }
+  Future<CoreLifecycleResult> start() => _lifecycle.start();
 
   @override
-  Future<bool> shutdown(bool isUser) async {
-    _shutdownCompleter = Completer();
-    if (system.isWindows) {
-      await request.stopCoreByHelper();
-    }
-    _transport.disconnected();
-    // Idempotent, exit-confirming stop: repeated calls reuse the in-flight
-    // operation, and a graceful kill is waited on for up to 5 seconds.
-    final lease = _lease;
-    if (lease != null) {
-      final result = await lease.stop(const Duration(seconds: 5));
-      if (!result.exitConfirmed) {
-        commonPrint.log(
-          'Core process (pid ${lease.pid}) did not exit in time',
-          logLevel: LogLevel.warning,
-        );
-      }
-      _lease = null;
-    }
-    _clearCompleter();
-    if (isUser) {
-      return _shutdownCompleter.future;
-    } else {
-      return true;
-    }
+  Future<CoreLifecycleResult> restart() => _lifecycle.restart();
+
+  @override
+  Future<CoreLifecycleResult> stop() => _lifecycle.stop();
+
+  @override
+  Future<CoreLifecycleResult> close() {
+    return _closeOperation ??= _close();
   }
 
-  void _clearCompleter() {
-    for (final completer in _callbackCompleterMap.values) {
-      completer.safeCompleter(null);
+  Future<CoreLifecycleResult> _close() async {
+    try {
+      return await _lifecycle.close();
+    } finally {
+      await _rpcClient.close();
+      await _crashSubscription.cancel();
     }
   }
 
   @override
-  Future<String> preload() async {
-    await start();
-    return '';
-  }
-
-  @override
-  Future<T?> invoke<T>({
-    required ActionMethod method,
-    dynamic data,
+  Future<T?> invokeMethod<T>({
+    required CoreMethod method,
+    Object? arguments,
     Duration? timeout,
-  }) async {
-    final id = '${method.name}#${utils.id}';
-    _callbackCompleterMap[id] = Completer<T?>();
-    sendMessage(json.encode(coreMethodCallToJson(id, method, data)));
-    return (_callbackCompleterMap[id] as Completer<T?>).future.withTimeout(
+  }) {
+    return _rpcClient.invoke<T>(
+      method: method,
+      arguments: arguments,
       timeout: timeout,
-      onLast: () {
-        final completer = _callbackCompleterMap[id];
-        completer?.safeCompleter(null);
-        _callbackCompleterMap.remove(id);
-      },
-      tag: id,
-      onTimeout: () => null,
     );
   }
-
-  @override
-  Completer get completer => _transport.connectionCompleter;
 }
 
 final coreService = system.isDesktop ? CoreService() : null;
-

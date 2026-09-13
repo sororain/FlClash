@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:isolate';
 
 import 'package:sororain/common/common.dart';
+import 'package:sororain/core/method.dart';
 import 'package:sororain/enum/enum.dart';
 import 'package:sororain/models/models.dart';
 import 'package:flutter/foundation.dart';
@@ -74,6 +75,28 @@ class Service {
     final dataJson = await data.commonToJSON<dynamic>();
     return actionResultFromWireJson(
       Map<String, dynamic>.from(dataJson as Map),
+    );
+  }
+
+  Future<CoreMethodResponse?> invokeMethod(CoreMethodCall call) async {
+    final id = call.id ?? '';
+    final result = await invokeAction(
+      Action(
+        id: id,
+        method: ActionMethod.values.byName(call.method.name),
+        data: call.arguments,
+      ),
+    );
+    if (result == null) {
+      return null;
+    }
+    final error = result.code == ResultType.error
+        ? CoreMethodError(code: 'core_error', message: '$result')
+        : null;
+    return CoreMethodResponse(
+      id: result.id,
+      result: result.code == ResultType.error ? null : result.data,
+      error: error,
     );
   }
 

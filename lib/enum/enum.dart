@@ -265,6 +265,42 @@ enum ActionMethod {
 
 enum AuthorizeCode { none, success, error }
 
+enum TunAuthorizationState { none, authorized, unauthorized }
+
+enum GeoResource {
+  @JsonValue('mmdb')
+  MMDB,
+  @JsonValue('asn')
+  ASN,
+  @JsonValue('geoip')
+  GEOIP,
+  @JsonValue('geosite')
+  GEOSITE;
+
+  static GeoResource fromJson(String value) {
+    return switch (value) {
+      'mmdb' => GeoResource.MMDB,
+      'asn' => GeoResource.ASN,
+      'geo-ip' || 'geoip' => GeoResource.GEOIP,
+      'geo-site' || 'geosite' => GeoResource.GEOSITE,
+      _ => throw ArgumentError.value(value, 'value', 'Invalid geo resource'),
+    };
+  }
+}
+
+extension GeoResourceExt on GeoResource {
+  String get configKey {
+    return switch (this) {
+      GeoResource.MMDB => 'mmdb',
+      GeoResource.ASN => 'asn',
+      GeoResource.GEOIP => 'geoip',
+      GeoResource.GEOSITE => 'geosite',
+    };
+  }
+
+  String get updatingKey => 'geo_resource_$name';
+}
+
 enum WindowsHelperServiceStatus { none, presence, running }
 
 enum FunctionTag {

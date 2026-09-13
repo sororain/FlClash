@@ -12,12 +12,15 @@ import 'package:flutter/material.dart';
 const appName = 'Sororain';
 const appHelperService = 'SororainHelperService';
 const coreName = 'clash.meta';
+const coreManifestName = 'manifest.json';
 const browserUa =
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 const packageName = 'com.sororain.clash';
 final unixSocketPath = '/tmp/SororainSocket_${Random().nextInt(10000)}.sock';
-final windowsPipeName = '\\\\.\\pipe\\SororainCore_${Random().nextInt(10000)}';
+final windowsPipeName = '\\\\.\\pipe\\SororainCore_${_randomPipeId()}';
 const helperPort = 47890;
+const helperProtocolVersionHeader = 'x-sororain-helper-protocol';
+const helperProtocolVersion = '6';
 const maxTextScale = 1.4;
 const minTextScale = 0.8;
 final baseInfoEdgeInsets = EdgeInsets.symmetric(
@@ -31,6 +34,14 @@ final listHeaderPadding = EdgeInsets.only(
   bottom: 8.mAp,
 );
 const sheetAppBarHeight = 68.0;
+
+String _randomPipeId() {
+  final random = Random.secure();
+  return List.generate(
+    16,
+    (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'),
+  ).join();
+}
 
 const watchExecution = false;
 
