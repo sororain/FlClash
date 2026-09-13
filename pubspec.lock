@@ -1754,11 +1754,10 @@ packages:
   tray_manager:
     dependency: "direct main"
     description:
-      path: "packages/tray_manager"
-      ref: main
-      resolved-ref: da2d83dd1cc3c9709bf708ff827ad9072504ce52
-      url: "https://github.com/chen08209/tray_manager.git"
-    source: git
+      name: tray_manager
+      sha256: "1a659b08baa6e9b91ef8ce16eda37740de398be1c4cf322b8a1ddfef25c68c5a"
+      url: "https://pub.dev"
+    source: hosted
     version: "0.5.3"
   typed_data:
     dependency: transitive

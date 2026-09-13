@@ -26,11 +26,7 @@ dependencies:
   mobile_scanner: ^7.0.1
   app_links: ^7.0.0
   win32_registry: ^2.0.0
-  tray_manager:
-    git:
-      url: https://github.com/chen08209/tray_manager.git
-      ref: main
-      path: packages/tray_manager
+  tray_manager: ^0.5.2
   wifi_ssid:
     path: plugins/wifi_ssid
   collection: ^1.19.1
