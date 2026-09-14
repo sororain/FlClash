@@ -1,4 +1,4 @@
-// ignore_for_file: avoid_print
+﻿// ignore_for_file: avoid_print
 
 import 'dart:convert';
 import 'dart:io';
@@ -769,8 +769,10 @@ class Build {
     return command.split(' ');
   }
 
-  /// flutter_distributor 不随仓库分发：先幂等激活一次，再统一以 `dart pub global run`
-  /// 调用，避免本机必须把 pub 的全局 bin 目录加进 PATH。
+  /// 打包器暂钉在 flutter_distributor fork：exe maker（flutter_app_packager 0.6.11
+  /// 官方版）不支持 make_config.yaml 里带语言文件的 locales Map——中文安装界面场景
+  /// 只有 chen08209 fork 能解析。先幂等激活，再以 `dart pub global run` 调用，避免
+  /// 本机必须把 pub 的全局 bin 目录加进 PATH。
   static Future<void> getDistributor() async {
     await exec(
       name: 'activate flutter_distributor',
@@ -861,6 +863,7 @@ class BuildCommand {
   Future<void> _buildDistributor({
     required Target target,
     required String targets,
+    required String archName,
     String args = '',
   }) async {
     await Build.getDistributor();
@@ -868,7 +871,7 @@ class BuildCommand {
     await Build.exec(
       name: name,
       Build.getExecutable(
-        'dart pub global run flutter_distributor:main package --skip-clean --platform ${target.name} --targets $targets --flutter-build-args=$allFlutterArgs$args',
+        'dart pub global run flutter_distributor:main package --skip-clean --platform ${target.name} --targets $targets --flutter-build-args=$allFlutterArgs$args --description $archName',
       ),
     );
   }
@@ -928,7 +931,7 @@ class BuildCommand {
         _buildDistributor(
           target: target,
           targets: targetsArg ?? 'exe,zip',
-          args: ' --description $archName',
+          archName: archName,
         );
         return;
       case Target.linux:
@@ -943,8 +946,8 @@ class BuildCommand {
         _buildDistributor(
           target: target,
           targets: targets,
-          args:
-              ' --description $archName --build-target-platform $defaultTarget',
+          archName: archName,
+          args: ' --build-target-platform $defaultTarget',
         );
         return;
       case Target.android:
@@ -966,7 +969,7 @@ class BuildCommand {
         _buildDistributor(
           target: target,
           targets: targetsArg ?? 'dmg',
-          args: ' --description $archName',
+          archName: archName,
         );
         return;
     }
