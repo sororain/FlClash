@@ -262,10 +262,9 @@ Future<void> _syncNames() async {
     ]),
     // lib/common/window.dart
     (pathJoin(_current, 'lib', 'common', 'window.dart'), [
-      // 深链 brand scheme 同步自 app_config（AndroidManifest 的 sororain 同名）：
-      // 旧名注册替换为当前品牌名；flclash 属固定入口历史遗留,不在此处回写。
+      // 深链 brand scheme 同步自 app_config（AndroidManifest 的 sororain 同名），
+      // 仅旧品牌名注册替换为当前品牌名。
       ("protocol.register('$oldAppNameLower')", "protocol.register('${appName.toLowerCase()}')"),
-      ("protocol.register('flclash')", "protocol.register('${appName.toLowerCase()}')"),
     ]),
     // core/tun/tun.go
     (pathJoin(_current, 'core', 'tun', 'tun.go'), [
