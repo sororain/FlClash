@@ -26,8 +26,8 @@ class ProxyCard extends StatelessWidget {
 
   Measure get measure => globalState.measure;
 
-  void _handleTestCurrentDelay() {
-    proxyDelayTest(proxy, testUrl);
+  void _handleTestCurrentDelay(WidgetRef ref) {
+    ref.read(proxiesActionProvider.notifier).proxyDelayTest(proxy, testUrl);
   }
 
   Widget _buildDelayText() {
@@ -38,25 +38,28 @@ class ProxyCard extends StatelessWidget {
           final delay = ref.watch(
             delayProvider(proxyName: proxy.name, testUrl: testUrl),
           );
+          final pending = ref.watch(
+            delayTestPendingProvider(proxyName: proxy.name, testUrl: testUrl),
+          );
           return FadeThroughBox(
             alignment: type == ProxyCardType.expand
                 ? Alignment.centerLeft
                 : Alignment.centerRight,
-            child: delay == 0 || delay == null
+            child: pending || delay == 0 || delay == null
                 ? SizedBox(
                     height: measure.labelSmallHeight,
                     width: measure.labelSmallHeight,
-                    child: delay == 0
+                    child: pending || delay == 0
                         ? const CircularProgressIndicator(strokeWidth: 2)
                         : IconButton(
                             icon: const Icon(Icons.bolt),
                             iconSize: globalState.measure.labelSmallHeight,
                             padding: EdgeInsets.zero,
-                            onPressed: _handleTestCurrentDelay,
+                            onPressed: () => _handleTestCurrentDelay(ref),
                           ),
                   )
                 : GestureDetector(
-                    onTap: _handleTestCurrentDelay,
+                    onTap: () => _handleTestCurrentDelay(ref),
                     child: Text(
                       delay > 0 ? '$delay ms' : 'Timeout',
                       style: context.textTheme.labelSmall?.copyWith(

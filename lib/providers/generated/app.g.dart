@@ -1203,6 +1203,58 @@ abstract class _$DelayDataSource extends $Notifier<DelayMap> {
   }
 }
 
+@ProviderFor(PendingDelayTests)
+final pendingDelayTestsProvider = PendingDelayTestsProvider._();
+
+final class PendingDelayTestsProvider
+    extends $NotifierProvider<PendingDelayTests, Set<String>> {
+  PendingDelayTestsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'pendingDelayTestsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$pendingDelayTestsHash();
+
+  @$internal
+  @override
+  PendingDelayTests create() => PendingDelayTests();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Set<String> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Set<String>>(value),
+    );
+  }
+}
+
+String _$pendingDelayTestsHash() => r'9adf5cf9c4ee8552ee9a0cff85d6da8978a6f8ce';
+
+abstract class _$PendingDelayTests extends $Notifier<Set<String>> {
+  Set<String> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<Set<String>, Set<String>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<Set<String>, Set<String>>,
+              Set<String>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(SystemUiOverlayStyleState)
 final systemUiOverlayStyleStateProvider = SystemUiOverlayStyleStateProvider._();
 

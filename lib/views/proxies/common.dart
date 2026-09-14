@@ -48,41 +48,16 @@ void updateCurrentUnfoldSet(Set<String> value) {
       .updateCurrentUnfoldSet(value);
 }
 
-Future<void> proxyDelayTest(Proxy proxy, [String? testUrl]) async {
-  final ref = globalState.container;
-  final groups = getGroups();
-  final selectedMap = ref.read(
-    currentProfileProvider.select((state) => state?.selectedMap ?? {}),
-  );
-  final state = computeRealSelectedProxyState(
-    proxy.name,
-    groups: groups,
-    selectedMap: selectedMap,
-  );
-  final currentTestUrl = state.testUrl.takeFirstValid([
-    ref.read(realTestUrlProvider(testUrl)),
-  ]);
-  if (state.proxyName.isEmpty) {
-    return;
-  }
-  ref
+Future<void> proxyDelayTest(Proxy proxy, [String? testUrl]) {
+  return globalState.container
       .read(proxiesActionProvider.notifier)
-      .setDelay(Delay(url: currentTestUrl, name: state.proxyName, value: 0));
-  ref
-      .read(proxiesActionProvider.notifier)
-      .setDelay(await coreController.getDelay(currentTestUrl, state.proxyName));
+      .proxyDelayTest(proxy, testUrl);
 }
 
-Future<void> delayTest(List<Proxy> proxies, [String? testUrl]) async {
-  final delayProxies = proxies.map<Future>((proxy) async {
-    await proxyDelayTest(proxy, testUrl);
-  }).toList();
-
-  final batchesDelayProxies = delayProxies.batch(100);
-  for (final batchDelayProxies in batchesDelayProxies) {
-    await Future.wait(batchDelayProxies);
-  }
-  globalState.container.read(sortNumProvider.notifier).add();
+Future<void> delayTest(List<Proxy> proxies, [String? testUrl]) {
+  return globalState.container
+      .read(proxiesActionProvider.notifier)
+      .delayTest(proxies, testUrl);
 }
 
 double getScrollToSelectedOffset({

@@ -2,6 +2,7 @@
 export 'color.dart';
 export 'compute.dart';
 export 'constant.dart';
+export 'task_pool.dart';
 export 'context.dart';
 export 'converter.dart';
 export 'datetime.dart';

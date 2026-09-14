@@ -1760,6 +1760,91 @@ final class DelayFamily extends $Family
   String toString() => r'delayProvider';
 }
 
+@ProviderFor(delayTestPending)
+final delayTestPendingProvider = DelayTestPendingFamily._();
+
+final class DelayTestPendingProvider
+    extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
+  DelayTestPendingProvider._({
+    required DelayTestPendingFamily super.from,
+    required ({String proxyName, String? testUrl}) super.argument,
+  }) : super(
+         retry: null,
+         name: r'delayTestPendingProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$delayTestPendingHash();
+
+  @override
+  String toString() {
+    return r'delayTestPendingProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool create(Ref ref) {
+    final argument = this.argument as ({String proxyName, String? testUrl});
+    return delayTestPending(
+      ref,
+      proxyName: argument.proxyName,
+      testUrl: argument.testUrl,
+    );
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is DelayTestPendingProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$delayTestPendingHash() => r'd48f9c6e03525b435bdd07167d0c256b297482d0';
+
+final class DelayTestPendingFamily extends $Family
+    with
+        $FunctionalFamilyOverride<bool, ({String proxyName, String? testUrl})> {
+  DelayTestPendingFamily._()
+    : super(
+        retry: null,
+        name: r'delayTestPendingProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  DelayTestPendingProvider call({required String proxyName, String? testUrl}) =>
+      DelayTestPendingProvider._(
+        argument: (proxyName: proxyName, testUrl: testUrl),
+        from: this,
+      );
+
+  @override
+  String toString() => r'delayTestPendingProvider';
+}
+
 @ProviderFor(selectedMap)
 final selectedMapProvider = SelectedMapProvider._();
 

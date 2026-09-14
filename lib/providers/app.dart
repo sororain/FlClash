@@ -268,6 +268,57 @@ class DelayDataSource extends _$DelayDataSource with AutoDisposeNotifierMixin {
 }
 
 @Riverpod(keepAlive: true)
+class PendingDelayTests extends _$PendingDelayTests
+with AutoDisposeNotifierMixin {
+  final Map<String, int> _counts = {};
+
+  @override
+  Set<String> build() {
+    return const <String>{};
+  }
+
+  void acquire(Iterable<String> keys) {
+    var added = false;
+    for (final key in keys) {
+      final count = _counts[key] ?? 0;
+      _counts[key] = count + 1;
+      added |= count == 0;
+    }
+    if (added) {
+      _publish();
+    }
+  }
+
+  void release(Iterable<String> keys) {
+    var removed = false;
+    for (final key in keys) {
+      final count = _counts[key];
+      if (count == null) {
+        continue;
+      }
+      if (count > 1) {
+        _counts[key] = count - 1;
+        continue;
+      }
+      _counts.remove(key);
+      removed = true;
+    }
+    if (removed) {
+      _publish();
+    }
+  }
+
+  void clear() {
+    _counts.clear();
+    _publish();
+  }
+
+  void _publish() {
+    value = Set.unmodifiable(_counts.keys);
+  }
+}
+
+@Riverpod(keepAlive: true)
 class SystemUiOverlayStyleState extends _$SystemUiOverlayStyleState
     with AutoDisposeNotifierMixin {
   @override

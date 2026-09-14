@@ -45,6 +45,11 @@ String _randomPipeId() {
 
 const watchExecution = false;
 
+/// 批量延迟测试的并发上限，压住 core 同时能处理的 URL 探测量
+/// （与 core/common.go 的并发约束配对）。
+const maxConcurrentDelayTests = 16;
+
+
 final defaultTextScaleFactor =
     WidgetsBinding.instance.platformDispatcher.textScaleFactor;
 const httpTimeoutDuration = Duration(milliseconds: 5000);
