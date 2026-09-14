@@ -262,9 +262,10 @@ Future<void> _syncNames() async {
     ]),
     // lib/common/window.dart
     (pathJoin(_current, 'lib', 'common', 'window.dart'), [
-      // 深链 scheme 固定为 flclash:对齐上游 0.8.96 与 AndroidManifest,保证外部导入链接兼容
-      ("protocol.register('$oldAppNameLower')", "protocol.register('flclash')"),
-      ("protocol.register('${appName.toLowerCase()}')", "protocol.register('flclash')"),
+      // 深链 brand scheme 同步自 app_config（AndroidManifest 的 sororain 同名）：
+      // 旧名注册替换为当前品牌名；flclash 属固定入口历史遗留,不在此处回写。
+      ("protocol.register('$oldAppNameLower')", "protocol.register('${appName.toLowerCase()}')"),
+      ("protocol.register('flclash')", "protocol.register('${appName.toLowerCase()}')"),
     ]),
     // core/tun/tun.go
     (pathJoin(_current, 'core', 'tun', 'tun.go'), [
@@ -326,8 +327,8 @@ Future<void> _syncNames() async {
         ),
       ]),
     // plugins/setup/{windows,linux}/CMakeLists.txt、macos/setup.podspec、buildkit/**
-    // 已随 0.8.97 式迁移删除：core/helper 改由 plugins/setup/hook/build.dart
-    // (Dart build hook) 构建，包名从 build_config.yaml 读取，平台文件里不再有字面量需要替换。
+    // 已随 0.8.96 起的 hooks/直调整合移除字面量：core/helper 名由 app_config.json
+    // 派生（BuildConfig.load），平台文件里不再有品牌名需要替换。
   ];
 
   // 生成功能开关文件
