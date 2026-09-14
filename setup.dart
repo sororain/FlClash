@@ -550,6 +550,7 @@ class BuildItem {
 class Build {
   static List<BuildItem> get buildItems => [
     BuildItem(target: Target.macos, arch: Arch.arm64),
+    BuildItem(target: Target.macos, arch: Arch.arm64),
     BuildItem(target: Target.macos, arch: Arch.amd64),
     BuildItem(target: Target.linux, arch: Arch.arm64),
     BuildItem(target: Target.linux, arch: Arch.amd64),
@@ -928,7 +929,7 @@ class BuildCommand {
 
     switch (target) {
       case Target.windows:
-        _buildDistributor(
+        await _buildDistributor(
           target: target,
           targets: targetsArg ?? 'exe,zip',
           archName: archName,
@@ -943,7 +944,7 @@ class BuildCommand {
         ].join(',');
         final defaultTarget = targetMap[arch];
         await _getLinuxDependencies(arch!);
-        _buildDistributor(
+        await _buildDistributor(
           target: target,
           targets: targets,
           archName: archName,
@@ -966,7 +967,7 @@ class BuildCommand {
         return;
       case Target.macos:
         await _getMacosDependencies();
-        _buildDistributor(
+        await _buildDistributor(
           target: target,
           targets: targetsArg ?? 'dmg',
           archName: archName,
@@ -989,7 +990,7 @@ Options:
   --arch <arch>      Target architecture (arm64, amd64, arm). Default: auto-detect
   --out <type>       Output type: app (full package) or core (Go core only)
   --env <name>       Environment: pre (default) or stable
-  --targets <list>   Comma-separated package targets (e.g. exe,zip). Default per platform
+  --targets <list>   Comma-separated package targets (e.g. exe,zip). Default per platform (not used by android)
   --verbose, -v      Show verbose Flutter build output
   --help, -h         Show this help message
 
