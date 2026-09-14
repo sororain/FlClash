@@ -13,7 +13,6 @@ PATTERN = re.compile(
 
 # 忽略的目录名
 IGNORE_DIRS = {'.git', '.dart_tool', 'build', '.idea', '.vscode', 'node_modules', '__pycache__'}
-IGNORE_ROOT_DIRS = {'0.8.93', '2.0.7', '2.0.8', 'dist', 'v2_theme', 'apiez'}
 
 # 需要扫描的文件后缀（白名单）
 SCAN_EXTENSIONS = {'.dart', '.kt', '.java', '.cpp', '.h', '.hpp', '.yaml'}
@@ -43,8 +42,6 @@ def main() -> None:
         if file.is_dir():
             continue
         if any(part in IGNORE_DIRS for part in file.parts):
-            continue
-        if any(part in IGNORE_ROOT_DIRS for part in file.parts):
             continue
         if not is_text_file(file):
             continue
