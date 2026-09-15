@@ -178,8 +178,9 @@ ARB files in `arb/`. Generated via `intl_utils` into `lib/l10n/`.
 
 ### iqoo ↔ v2board Alignment Rules
 
-`v2_core` routes: `v2board/app/Http/Routes/V1/*.php` (UserRoute covers most client calls), controllers under
-`v2board/app/Http/Controllers/V1/User/`. Keys:
+The local `v2board/` reference tree has been removed. The contract keys below were verified against
+`app/Http/Routes/V1/UserRoute.php` and `app/Http/Controllers/V1/User/` of the upstream V2Board code and remain valid —
+restore that reference tree before re-verifying against a specific backend build. Keys:
 
 - Amount fields are **fen (cents)** — always integer; wallet/transfer/UI display uses `fenToYuan`.
 - `order/check` returns `status` int (0–4); `cancel` is POST with `trade_no`.
