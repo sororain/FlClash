@@ -202,7 +202,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "delete": MessageLookupByLibrary.simpleMessage("删除"),
     "deleteMultipTip": m1,
     "deleteTip": m2,
-    "desc": MessageLookupByLibrary.simpleMessage("现代化的跨平台代理客户端，提供简洁流畅的使用体验。"),
+    "desc": MessageLookupByLibrary.simpleMessage("现代化的跨平台代理客户端，提供简洁流畅的使用体验"),
     "destination": MessageLookupByLibrary.simpleMessage("目标地址"),
     "destinationGeoIP": MessageLookupByLibrary.simpleMessage("目标地理定位"),
     "destinationIPASN": MessageLookupByLibrary.simpleMessage("目标IP ASN"),
