@@ -4,9 +4,9 @@ This file provides guidance for AI coding agents working with code in this repos
 
 ## Project Overview
 
-Sororain is a deep customization of FlClash built on Flutter with the ClashMeta (mihomo) Go core. Supports Android,
-Windows, macOS, and Linux. The customization layer lives in `lib/iqoo/` (login, orders, payment, invite, tickets,
-wallet) which talks to a v2board-style backend. Material You design with Surfboard-like UI.
+Sororain is a multi-platform proxy and subscription client built on Flutter with the ClashMeta (mihomo) Go core.
+Supports Android, Windows, macOS, and Linux. The customization layer lives in `lib/iqoo/` (login, orders, payment,
+invite, tickets, wallet) which talks to a v2board-style backend. Material You design with Surfboard-like UI.
 
 ## Common Development Commands
 
