@@ -6,8 +6,6 @@
 
 ## Sororain
 
-[![Last Version](https://img.shields.io/github/release/sororain/FlClash/all.svg?style=flat-square)](https://github.com/sororain/FlClash/releases)[![License](https://img.shields.io/github/license/sororain/FlClash?style=flat-square)](LICENSE)
-
 [![Channel](https://img.shields.io/badge/Telegram-Channel-blue?style=flat-square&logo=telegram)](https://t.me/sororain)
 
 A modern cross-platform proxy client with a clean, intuitive, and smooth user experience.
@@ -56,10 +54,6 @@ Support the following actions
     
     com.sororain.clash.action.TOGGLE
    ```
-
-## Download
-
-[![Get it on GitHub](https://img.shields.io/badge/Download-GitHub_Releases-blue?style=flat-square&logo=github)](https://github.com/sororain/FlClash/releases)
 
 ## Build
 
@@ -120,13 +114,3 @@ Support the following actions
            ```bash
            dart setup.dart macos
            ```
-
-## Star
-
-The easiest way to support developers is to click on the star (⭐) at the top of the page.
-
-<p style="text-align: center;">
-    <a href="https://api.star-history.com/svg?repos=sororain/FlClash&Date">
-        <img alt="start" width=50% src="https://api.star-history.com/svg?repos=sororain/FlClash&Date"/>
-    </a>
-</p>

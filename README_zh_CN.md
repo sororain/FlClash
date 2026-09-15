@@ -6,8 +6,6 @@
 
 ## Sororain
 
-[![Last Version](https://img.shields.io/github/release/sororain/FlClash/all.svg?style=flat-square)](https://github.com/sororain/FlClash/releases)[![License](https://img.shields.io/github/license/sororain/FlClash?style=flat-square)](LICENSE)
-
 [![Channel](https://img.shields.io/badge/Telegram-Channel-blue?style=flat-square&logo=telegram)](https://t.me/sororain)
 
 现代化的跨平台代理客户端，提供简洁流畅的使用体验
@@ -56,10 +54,6 @@ on Mobile:
     
     com.sororain.clash.action.TOGGLE
    ```
-
-## Download
-
-[![Get it on GitHub](https://img.shields.io/badge/Download-GitHub_Releases-blue?style=flat-square&logo=github)](https://github.com/sororain/FlClash/releases)
 
 ## Build
 
@@ -120,13 +114,3 @@ on Mobile:
            ```bash
            dart setup.dart macos
            ```
-
-## Star
-
-支持开发者的最简单方式是点击页面顶部的星标（⭐）。
-
-<p style="text-align: center;">
-    <a href="https://api.star-history.com/svg?repos=sororain/FlClash&Date">
-        <img alt="start" width=50% src="https://api.star-history.com/svg?repos=sororain/FlClash&Date"/>
-    </a>
-</p>
