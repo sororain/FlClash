@@ -1,5 +1,3 @@
-import 'package:sororain/common/common.dart';
-import 'package:sororain/core/core.dart';
 import 'package:sororain/enum/enum.dart';
 import 'package:sororain/models/models.dart';
 import 'package:sororain/providers/providers.dart';
