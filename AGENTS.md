@@ -4,10 +4,9 @@ This file provides guidance for AI coding agents working with code in this repos
 
 ## Project Overview
 
-Sororain is a deep customization of FlClash — a V2Board subscription/payment client built on Flutter with the
-ClashMeta (mihomo) Go core. Supports Android, Windows, macOS, and Linux. The customization layer lives in `lib/iqoo/`
-(login, orders, payment, invite, tickets, wallet) which talks to a V2Board backend (`v2board/`, git-ignored local
-reference). Material You design with Surfboard-like UI.
+Sororain is a deep customization of FlClash built on Flutter with the ClashMeta (mihomo) Go core. Supports Android,
+Windows, macOS, and Linux. The customization layer lives in `lib/iqoo/` (login, orders, payment, invite, tickets,
+wallet) which talks to a v2board-style backend. Material You design with Surfboard-like UI.
 
 ## Common Development Commands
 
@@ -176,17 +175,11 @@ ARB files in `arb/`. Generated via `intl_utils` into `lib/l10n/`.
 - In widgets with BuildContext: `context.appLocalizations.key` (import `common.dart`)
 - In controllers/providers/non-widget code: `currentAppLocalizations.key` (import `app_localizations.dart`)
 
-### iqoo ↔ v2board Alignment Rules
-
-The local `v2board/` reference tree has been removed. The contract keys below were verified against
-`app/Http/Routes/V1/UserRoute.php` and `app/Http/Controllers/V1/User/` of the upstream V2Board code and remain valid —
-restore that reference tree before re-verifying against a specific backend build. Keys:
+### Key Alignment Rules (iqoo backend)
 
 - Amount fields are **fen (cents)** — always integer; wallet/transfer/UI display uses `fenToYuan`.
 - `order/check` returns `status` int (0–4); `cancel` is POST with `trade_no`.
 - `coupon/check` is read-only and never participates in `limit_period` validation.
 - `notify` may silently `return true` for non-pending orders (a chosen, permanently-closed gap).
-- `telegram_discuss_link` in `comm/config` shows a "join group" card on the profile page; blank hides it (About-page
-  Telegram hardcoded to the publisher's group instead).
 - `connectivity_plus` pinned at **7.2.0** — 7.3.x crashes Windows builds via CP936/GBK encoding of C++ sources
   (C4819/C2220).
