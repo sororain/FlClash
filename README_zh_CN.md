@@ -68,11 +68,9 @@ on Mobile:
 
     - android
 
-        1. 安装  `Android SDK` ,  `Android NDK`
+        1. 安装 `Android SDK`、`Android NDK`，并配置 `ANDROID_NDK` 环境变量
 
-        2. 设置 `ANDROID_NDK` 环境变量
-
-        3. 运行构建脚本
+        2. 运行构建脚本
 
            ```bash
            dart setup.dart android
@@ -80,9 +78,9 @@ on Mobile:
 
     - windows
 
-        1. 你需要一个windows客户端
+        1. 需要 Windows 主机
 
-        2. 安装 `Flutter`、`Visual Studio 2022`（C++ 工作负载）、`CMake`、`Go 1.20+`、`Rust`、`Inno Setup`
+        2. 安装 `build_env_checklist.txt` 里列出的工具链
 
         3. 运行构建脚本
 
@@ -92,7 +90,7 @@ on Mobile:
 
     - linux
 
-        1. 你需要一个linux客户端
+        1. 需要 Linux 主机
 
         2. 依赖会由 setup 脚本自动安装，也可以手动安装：
            ```bash
@@ -107,9 +105,11 @@ on Mobile:
 
     - macOS
 
-        1. 你需要一个macOS客户端
+        1. 需要 macOS 主机
 
-        2. 运行构建脚本
+        2. 安装 `build_env_checklist.txt` 里列出的工具链
+
+        3. 运行构建脚本
 
            ```bash
            dart setup.dart macos

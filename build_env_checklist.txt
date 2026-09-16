@@ -1,0 +1,95 @@
+==========================================================================
+Sororain 本地环境搭建清单（Android / Windows / macOS / Linux）
+==========================================================================
+说明：本清单由 AGENTS.md + README 的构建事实整理而来，是【带走即用】
+的独立环境搭建文档；按目标平台装齐对应段落后即可在本机构建。
+
+【公共（所有平台通用，必备）】
+----------------------------------------------------------------------
+1) Git                    任意新版本；clone 后需执行：
+                          git submodule update --init --recursive
+                          （ClashMeta Go 内核在 core/Clash.Meta/ 子模块）
+2) Flutter SDK = 3.44.9   ★必须锁这个版本（Dart 3.12.2）
+                          ✕ 禁止升 3.47.x —— 3.47 Windows 引擎有崩溃
+                            bug（InternalFlutterGpu_Texture_InitializeFrom-
+                            Image 后台线程 ~20s 后挂起整个 app）。
+                          本机参考版本：Flutter 3.44.9 / Dart 3.12.2
+3) Go = 1.20 以上         ★供 ClashMeta 内核 build 用；本机参考：go1.26.5
+4) Dart pub 依赖          一条命令装齐：flutter pub get（setup.dart 写的
+                          env.json 用于 --dart-define-from-file）
+5) build_runner（若改模型/Provider/数据库则运行）
+                          dart run build_runner build --delete-conflicting-outputs
+
+【Windows 段（Windows 本机构建 exe/zip）】
+--------------------------------------------------------------------------
+a) Visual Studio 2022     选 C++ 桌面开发工作负载
+b) CMake                  Flutter Windows 工程需要（VS 自带也可）
+c) Inno Setup             打 setup.exe 安装器（flutter_distributor 调用）
+d) Rust (cargo)           编译 Windows Helper 服务
+                          本机参考：cargo 1.97.1
+e) Windows 产线命令
+   dart setup.dart windows                # 完整 exe+zip
+   dart setup.dart windows --out core     # 只出 Go core + helper
+
+【Android 段（任何桌面平台可交叉构建）】
+--------------------------------------------------------------------------
+a) Android SDK           含 platform-tools 与对应 API 平台
+b) Android NDK           编译 Go C 共享库（Go -buildmode=c-shared）
+                         本机参考：NDK 28.2.13676358（也装了 30.0）
+                         需配置环境变量 ANDROID_NDK
+c) Java JDK              Android SDK/Gradle 构建前置
+d) 构建命令（单架构 APK，默认）：
+   dart setup.dart android --arch arm64    (arm64 64位机, 推荐)
+   dart setup.dart android --arch arm      (arm 32位老机)
+   dart setup.dart android --arch amd64    (x86_64 模拟器)
+   产物：build/app/outputs/flutter-apk/
+
+【macOS 段（必须在 Mac 实机上，不支持交叉编译）】
+--------------------------------------------------------------------------
+a) Xcode 26.x            含 Command Line Tools（xcode-select -s）
+                        上游 CI 锁 26.2/26.3（26.x 即可）
+b) CocoaPods             brew install cocoapods
+                        跑 podspec 触发 "Build Go core"
+c) Go 1.20+              编译 Go core（须带 CGO 的 darwin/clang）
+d) Node.js + npm         DMG 打包工具 appdmg 会由 setup 自动安装：
+                        npm install -g appdmg
+e) Flutter 桌面已启用    flutter config --enable-macos-desktop
+f) macOS 产线：
+   dart setup.dart macos
+   产物：dist/Sororain-<版本>-macos-<arch>.dmg
+
+
+【Linux 段（Ubuntu/Debian 系，必须在 Linux 实机/虚拟机打包）】
+--------------------------------------------------------------------------
+a) Flutter SDK = 3.44.9 + flutter config --enable-linux-desktop
+   ※ Flutter 拒绝以 root 运行 — 请用普通用户执行所有构建命令
+b) Go = 1.20+                        （编译 Go core libclash/linux/）
+c) apt 安装（build_linux_vm.sh 一步装齐，含 clang；手动补也行）:
+     cmake build-essential clang     （Flutter Linux 的 CMake/C++ 硬依赖 + 可选的双编译器）
+     ninja-build libgtk-3-dev        （Flutter Linux 必备）
+     libayatana-appindicator3-dev    （托盘）
+     libkeybinder-3.0-dev            （全局快捷键）
+     rustup / cargo                  ★ ★ rust_api 插件的 Linux FFI 编译必须依赖 Rust（rustup/cargo），
+                                       缺失直接拦截 rust_api.so 编译（cargokit BuildTool FAILED）
+     locate                          （fork AppImage maker 检索 .so 用，我们 include:[] 未触发）
+     rpm + patchelf                  （amd64 出 RPM/AppImage 用）
+   dpkg-deb 系统自带                 （Deb 无需额外装）
+   appimagetool                      （setup.dart 自动 wget 到 /usr/local/bin）
+d) 产线（build_linux_vm.sh 一步装齐或手动安装后逐条跑）:
+    dart setup.dart linux                # amd64: deb + appimage + rpm 全出
+    dart setup.dart linux --arch arm64   # 仅 deb
+    产物: dist/Sororain-<版本>-linux-<arch>.{deb,AppImage,rpm}
+
+【平台限制与本仓库特别点】
+--------------------------------------------------------------------------
+· Rust/Helper 仅 Windows —— macOS 上无 Rust 步骤。
+· 交叉编译限制：只支持「当前平台 + Android」；macOS/Linux 包必须在
+  对应实机打包。
+· 双 dmg 分打：上游 CI 用 macos-15-intel（出 amd64）和 macos-latest
+  （出 arm64）两台 runner；本地装哪个 arch 就只出那一种。
+· Flutter 锁 3.44.9：不升 3.47.x（Windows 引擎崩溃 bug）。
+· connectivity_plus 锁 7.2.0：7.3.x 在 GBK 代码页的 Windows 上因
+  CP936/GBK 编码处理 C++ 源码报 C4819/C2220 而构建失败
+· setup.dart 会从 app_config.json 同步品牌到 30+ 平台文件，
+  build/name_state.json 记忆上次旧名做确定性替换。
+==========================================================================

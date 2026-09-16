@@ -41,7 +41,12 @@ endif()
 # of modifying this function.
 function(APPLY_STANDARD_SETTINGS TARGET)
   target_compile_features(${TARGET} PUBLIC cxx_std_14)
-  target_compile_options(${TARGET} PRIVATE -Wall -Werror)
+  # 注意：此处不使用 -Werror。APPLY_STANDARD_SETTINGS 会同时作用于 runner 与
+  # 全部第三方插件的编译目标，而上游 pub 插件代码（tray_manager、
+  # hotkey_manager_linux 等）在较新的 clang（如 Ubuntu 26.04 / clang 21）下会
+  # 触发 -Wdeprecated-declarations、-Wsometimes-uninitialized 等警告，
+  # -Werror 会直接中断构建。这些插件源码无法在本地修补。
+  target_compile_options(${TARGET} PRIVATE -Wall)
   target_compile_options(${TARGET} PRIVATE "$<$<NOT:$<CONFIG:Debug>>:-O3>")
   target_compile_definitions(${TARGET} PRIVATE "$<$<NOT:$<CONFIG:Debug>>:NDEBUG>")
 endfunction()

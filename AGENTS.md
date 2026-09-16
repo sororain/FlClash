@@ -59,15 +59,10 @@ The repository has no `test/` baseline. Verify changes with:
 
 ### Build Dependencies
 
-- **Windows:** Visual Studio 2022 (C++ workload), CMake, Inno Setup, Go 1.20+, Rust (cargo — helper service), Android NDK for Android builds.
-- **Linux:** `sudo apt-get install libayatana-appindicator3-dev libkeybinder-3.0-dev`
-- **macOS:** Xcode 26.x (`xcode-select -s` + Command Line Tools; upstream CI selects 26.2/26.3), CocoaPods
-  (`brew install cocoapods` — podspec hook "Build Go core"), Flutter 3.44.9 with macOS desktop enabled,
-  Go 1.20+ with CGO-capable clang, Node.js (`setup.dart` auto-installs `appdmg` via
-  `npm install -g appdmg` for DMG creation). Helper service is Windows-only — no Rust step on macOS.
-  Cross-builds are not possible: macOS packaging requires the host platform. Artifacts: both intel (amd64) and
-  Apple Silicon (arm64) dmg archives are produced (upstream CI uses separate `macos-15-intel` / `macos-latest`
-  runners; local builds auto-detect the host arch only).
+Rules that survive: Flutter pinned at **3.44.9**, `connectivity_plus` pinned at **7.2.0**, helper is Windows-only,
+cross-builds limited to host platform + Android.
+
+## Architecture
 
 ## Architecture
 

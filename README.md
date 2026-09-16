@@ -68,11 +68,9 @@ Support the following actions
 
     - android
 
-        1. Install `Android SDK`, `Android NDK`
+        1. Install `Android SDK`, `Android NDK` and set the `ANDROID_NDK` environment variable
 
-        2. Set `ANDROID_NDK` environment variable
-
-        3. Run build script
+        2. Run build script
 
            ```bash
            dart setup.dart android
@@ -80,9 +78,9 @@ Support the following actions
 
     - windows
 
-        1. Requires a Windows client
+        1. Requires a Windows host
 
-        2. Install `Flutter`, `Visual Studio 2022` (C++ workload), `CMake`, `Go 1.20+`, `Rust`, `Inno Setup`
+        2. Install the toolchain listed in `build_env_checklist.txt`
 
         3. Run build script
 
@@ -92,7 +90,7 @@ Support the following actions
 
     - linux
 
-        1. Requires a Linux client
+        1. Requires a Linux host
 
         2. Dependencies are auto-installed by setup script, or manually:
            ```bash
@@ -107,9 +105,11 @@ Support the following actions
 
     - macOS
 
-        1. Requires a macOS client
+        1. Requires a macOS host
 
-        2. Run build script
+        2. Install the toolchain listed in `build_env_checklist.txt`
+
+        3. Run build script
 
            ```bash
            dart setup.dart macos

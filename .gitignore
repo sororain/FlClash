@@ -67,10 +67,6 @@ devtools_options.yaml
 
 # 构建生成的环境文件(setup.dart 产出)
 /env.json
-/core_sha256.json
-
-# 本地文档(内部资料,不入库)
-/docs/
 
 # FVM Version Cache
 .fvm/
