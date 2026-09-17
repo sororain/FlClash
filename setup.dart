@@ -770,17 +770,19 @@ class Build {
     return command.split(' ');
   }
 
-  /// 打包器暂钉在 flutter_distributor fork：exe maker（flutter_app_packager 0.6.11
-  /// 官方版）不支持 make_config.yaml 里带语言文件的 locales Map——中文安装界面场景
-  /// 只有 chen08209 fork 能解析。先幂等激活，再以 `dart pub global run` 调用，避免
-  /// 本机必须把 pub 的全局 bin 目录加进 PATH。
+  /// 打包器暂钉在自有 fork（sororain/flutter_distributor @ v0.6.11-sororain.1）：
+  /// exe maker（官方 flutter_app_packager 0.6.11）不支持 make_config.yaml 里带语言
+  /// 文件的 locales Map——中文安装界面场景只有本 fork 能解析；该 fork 另外修掉了
+  /// rpm >= 4.20 包专属 %builddir 导致 %install 相对路径失效的问题。
+  /// 先幂等激活，再以 `dart pub global run` 调用，避免本机必须把 pub 的全局 bin
+  /// 目录加进 PATH。
   static Future<void> getDistributor() async {
     await exec(
       name: 'activate flutter_distributor',
       Build.getExecutable(
         'dart pub global activate -s git '
-        'https://github.com/chen08209/flutter_distributor.git '
-        '--git-ref v0.6.11-flclash.2 '
+        'https://github.com/sororain/flutter_distributor.git '
+        '--git-ref v0.6.11-sororain.1 '
         '--git-path packages/flutter_distributor',
       ),
     );

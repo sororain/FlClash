@@ -5,7 +5,7 @@
 # 本脚本自动处理以下几类「跨 LTS 版本漂移」问题，无需手工干预：
 #   · 仓库从 Windows 拷贝导致的 shell 脚本 CRLF 换行 / 缺可执行位
 #   · 新版 clang 对第三方 pub 插件报更严格警告，叠加 Linux 模板的 -Werror
-#   · rpm >= 4.20 的包专属 %builddir 导致 RPM spec 相对路径失效
+# （rpm >= 4.20 包专属 %builddir 的兼容修复已在自有 fork 中完成，见 setup.dart）
 # 仍可能随系统/上游变化而需手工介入的：apt 包名更名、Go 与 Flutter 的最低版本要求、
 # 以及 flutter_distributor 上游源码结构变动（届时 step7 会打印修补失败告警）。
 #
@@ -286,31 +286,9 @@ step7_build() {
   echo "== [7/7] 打包 deb + appimage + rpm =="
   require_sudo
 
-  # rpm >= 4.20 / 6.x 引入包专属 %builddir（%{_builddir}/%{name}-%{version}-build），
-  # %install 改在该子目录中执行，导致 flutter_app_packager 生成的 spec 里那些
-  # 相对路径全部失效（cp: cannot stat 'Sororain/*'），RPM 打包必然失败。
-  # 修补方式：在 spec 的 %install 开头补一行 cd %{_topdir}/BUILD。
-  # 注意 pub global 实际运行的是编译快照，改动源码后必须删掉快照才会重新编译。
-  local tpl snap
-  for tpl in "$HOME"/.pub-cache/git/flutter_distributor-*/packages/flutter_app_packager/lib/src/makers/rpm/make_rpm_config.dart; do
-    [ -f "$tpl" ] || continue
-    if ! grep -q 'cd %{_topdir}/BUILD' "$tpl"; then
-      sed -i "s|'%install': \[|'%install': [\n            'cd %{_topdir}/BUILD',|" "$tpl"
-      if grep -q 'cd %{_topdir}/BUILD' "$tpl"; then
-        echo "  已修补 RPM spec 模板"
-      else
-        echo "  ⚠ 自动修补 RPM 模板失败，rpm 目标可能仍会失败"
-      fi
-    fi
-    for snap in "$HOME"/.pub-cache/global_packages/flutter_distributor/bin/main.dart-*.snapshot; do
-      [ -f "$snap" ] || continue
-      if [ "$tpl" -nt "$snap" ]; then
-        rm -f "$snap"
-        echo "  已删除过期快照，强制重新编译"
-      fi
-    done
-  done
-
+  # rpm >= 4.20 包专属 %builddir 的兼容修复，已并入自有 fork
+  # （sororain/flutter_distributor @ v0.6.11-sororain.1，由 setup.dart 激活），
+  # 所以这里不再需要在运行时修补第三方源码。
   dart setup.dart linux --out app
   echo "---- 产物 ----"
   ls -lh dist/ 2>/dev/null || true
