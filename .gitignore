@@ -1,4 +1,4 @@
-# Miscellaneous
+# 杂项
 *.class
 *.log
 *.pyc
@@ -12,18 +12,16 @@
 .swiftpm/
 migrate_working_dir/
 
-# IntelliJ related
+# IDE 配置（JetBrains）
 *.iml
 *.ipr
 *.iws
 .idea/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
+# IDE 配置（VS Code，本机不入库；.vscode/ 无中间斜杠 = 任意层级匹配）
 .vscode/
 
-# Flutter/Dart/Pub related
+# Flutter / Dart / Pub
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
@@ -35,22 +33,22 @@ migrate_working_dir/
 /build/
 /dist/
 
-# Symbolication related
+# 符号化相关
 app.*.symbols
 
-# Obfuscation related
+# 混淆相关
 app.*.map.json
 
-#AI generated
+# AI 工具（本地生成/配置）
 CLAUDE.md
 /.claude
 
-
-# Android Studio will place build artifacts here
+# Android Studio 构建产物
 /android/app/debug
 /android/app/profile
 /android/app/release
 /android/**/.cxx
+# 本行不能删：**/android/build/ 的 ** 前缀不跨目录，覆盖不到 android/app/build
 /android/**/build
 /android/common/**/.**/
 /android/common/local.*
@@ -58,20 +56,26 @@ CLAUDE.md
 /android/core/**/cmake-build-*/
 /android/core/**/jniLibs/
 
-#Sororain
+# 本项目构建产物
 /libclash/
 /android/app/src/main/jniLibs/
 /services/helper/target
+
+# 工具本地配置（不入库）
 /macos/**/Package.resolved
 devtools_options.yaml
 
-# 构建生成的环境文件(setup.dart 产出)
+# setup.dart 生成的环境文件
 /env.json
 
-# FVM Version Cache
+# FVM 版本缓存
 .fvm/
 .fvmrc
+
+# 内部模块与本地配置（私有，不入库）
 app_config.json
 lib/iqoo/
+
+# Android Gradle 产物（任意模块层级）
 **/android/.gradle/
 **/android/build/
