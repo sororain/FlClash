@@ -137,7 +137,7 @@ Desktop-only managers are conditionally inserted in `lib/application.dart`.
 4. `writeCoreManifest` (via build_tool) writes `libclash/<platform>/manifest.json` — the installed app reads it for
    helper verification. No `core_sha256.json`, no `--dart-define CORE_SHA256`.
 5. `env.json` (APP_ENV, ANDROID_ARCH) is consumed by `--dart-define-from-file=env.json` for `flutter` builds.
-6. Packaging via our own flutter_distributor fork (`sororain/flutter_distributor @ v0.6.11-sororain.1`, idempotent
+6. Packaging via our own flutter_distributor fork (`m1zzy1/flutter_distributor @ v0.6.11-sororain.1`, idempotent
    activation + `dart pub global run`). The fork keeps the `locales` map support that the official
    `flutter_app_packager` lacks, and carries the rpm >= 4.20 `%builddir` fix — so `build_linux_vm.sh` no longer
    patches the rpm spec at build time. **Do not switch to `fastforge` 0.6.12** — its exe maker

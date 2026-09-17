@@ -287,7 +287,7 @@ step7_build() {
   require_sudo
 
   # rpm >= 4.20 包专属 %builddir 的兼容修复，已并入自有 fork
-  # （sororain/flutter_distributor @ v0.6.11-sororain.1，由 setup.dart 激活），
+  # （m1zzy1/flutter_distributor @ v0.6.11-sororain.1，由 setup.dart 激活），
   # 所以这里不再需要在运行时修补第三方源码。
   dart setup.dart linux --out app
   echo "---- 产物 ----"

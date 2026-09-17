@@ -770,7 +770,7 @@ class Build {
     return command.split(' ');
   }
 
-  /// 打包器暂钉在自有 fork（sororain/flutter_distributor @ v0.6.11-sororain.1）：
+  /// 打包器暂钉在自有 fork（m1zzy1/flutter_distributor @ v0.6.11-sororain.1）：
   /// exe maker（官方 flutter_app_packager 0.6.11）不支持 make_config.yaml 里带语言
   /// 文件的 locales Map——中文安装界面场景只有本 fork 能解析；该 fork 另外修掉了
   /// rpm >= 4.20 包专属 %builddir 导致 %install 相对路径失效的问题。
@@ -781,7 +781,7 @@ class Build {
       name: 'activate flutter_distributor',
       Build.getExecutable(
         'dart pub global activate -s git '
-        'https://github.com/sororain/flutter_distributor.git '
+        'https://github.com/m1zzy1/flutter_distributor.git '
         '--git-ref v0.6.11-sororain.1 '
         '--git-path packages/flutter_distributor',
       ),
